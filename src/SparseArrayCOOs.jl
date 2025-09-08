@@ -164,8 +164,12 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
     entrylines = get(io, :limit, false) ? displaysize(io)[1] - 4 : typemax(Int)
     pad = map(ndigits, size(A))
     if entrylines >= nstored                    # Enough space to print all the stored entries
-        for (ind, val) in zip(sinds, svals)
-            _print_ln_entry(io, pad, ind, val)
+        for ptr in 1:nstored
+            if ptr == 1 || sinds[ptr] != sinds[ptr-1]
+                _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
+            else
+                _print_ln_dup_entry(io, pad, svals[ptr])
+            end
         end
     elseif entrylines <= 0                      # No space to print any of the stored entries
         print(io, " \u2026")
@@ -179,7 +183,11 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
         # First chunk
         prechunk = div(entrylines - 1, 2, RoundUp)
         for ptr in 1:prechunk
-            _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
+            if ptr == 1 || sinds[ptr] != sinds[ptr-1]
+                _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
+            else
+                _print_ln_dup_entry(io, pad, svals[ptr])
+            end
         end
 
         # Dots
@@ -188,7 +196,11 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
         # Second chunk
         postchunk = div(entrylines - 1, 2, RoundDown)
         for ptr in nstored-postchunk+1:nstored
-            _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
+            if sinds[ptr] != sinds[ptr-1]
+                _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
+            else
+                _print_ln_dup_entry(io, pad, svals[ptr])
+            end
         end
     end
 end
@@ -204,6 +216,14 @@ function _print_ln_entry(
         k == N || print(io, ", ")
     end
     return print(io, "]  =  ", val)
+end
+function _print_ln_dup_entry(io::IO, pad::NTuple{N,Int}, val) where {N}
+    print(io, '\n', "   ")
+    for k in 1:N
+        print(io, ' '^(pad[k]))
+        k == N || print(io, "  ")
+    end
+    return print(io, "   +  ", val)
 end
 
 function summary(io::IO, A::SparseArrayCOO)

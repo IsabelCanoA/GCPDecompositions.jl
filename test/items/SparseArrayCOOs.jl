@@ -16,6 +16,13 @@
         @test A.dims === dims
         @test A.inds == inds && A.vals == vals
 
+        # SparseArrayCOO(dims, inds, vals) - with duplicate indices
+        vals2 = Tv[2, 1, 5]
+        A = SparseArrayCOO(dims, [inds; inds], [vals; vals2])
+        @test typeof(A) === SparseArrayCOO{Tv,Ti,N}
+        @test A.dims === dims
+        @test A.inds == [inds; inds] && A.vals == [vals; vals2]
+
         # check_Ti(dims, Ti)
         @test_throws ArgumentError SparseArrayCOO{Tv,Ti,N}((-1, 3, 2)[1:N], inds, vals)
         if Ti !== Int
@@ -130,7 +137,7 @@ end
         @test_throws BoundsError A[ind_out1...]
         @test_throws BoundsError A[ind_out2...]
 
-        # duplicate indices
+        # with duplicate indices
         A = SparseArrayCOO(dims, [tuple.(inds...); tuple.(inds...)], [vals; vals])
         for (ind, val) in zip(tuple.(inds...), vals)
             @test A[ind...] == Tv(2 * val)
@@ -168,6 +175,16 @@ end
             @test typeof(A) === SparseArrayCOO{Tv,Ti,N}
             @test A.dims === dims
             @test A.inds == inds && A.vals == [vals[1], val, vals[3]]
+
+            # overwrite existing value - with duplicate indices
+            ind = (1, 3, 2)[1:N]
+            vals2 = Tv[2, 1, 5]
+            A = SparseArrayCOO(dims, [copy(inds); copy(inds)], [copy(vals); copy(vals2)])
+            A[ind...] = val
+            @test typeof(A) === SparseArrayCOO{Tv,Ti,N}
+            @test A.dims === dims
+            @test A.inds == [inds; inds] &&
+                  A.vals == [vals[1], val, vals[3], vals2[1], zero(val), vals2[3]]
         end
 
         # out of bounds
@@ -261,6 +278,11 @@ end
         C = SparseArrayCOO(dims, inds, vals)
         @test sprint(show, C; context = :module => @__MODULE__) ==
               "SparseArrayCOO{$Tv, $Ti, $N}($dims, $inds, $vals)"
+
+        # SparseArrayCOO - with duplicate indices
+        C = SparseArrayCOO(dims, [inds; inds], [vals; vals])
+        @test sprint(show, C; context = :module => @__MODULE__) ==
+              "SparseArrayCOO{$Tv, $Ti, $N}($dims, $([inds; inds]), $([vals; vals]))"
     end
 end
 
@@ -289,9 +311,20 @@ end
         end
         showstr = length(vals) == 0 ? summary(C) : "$(summary(C)):\n$(join(entrystrs,'\n'))"
         @test sprint(show, MIME("text/plain"), C) == showstr
+
+        # SparseArrayCOO - with duplicate indices
+        perm = sortperm(inds; by = CartesianIndex)
+        sinds, svals = inds[perm], vals[perm]
+        C = SparseArrayCOO(dims, [inds; inds], [vals; vals])
+        entrystrs = Iterators.flatmap(sinds, svals) do ind, val
+            indstr = join(lpad.(Int.(ind), ndigits.(dims)), ", ")
+            return ("  [$indstr]  =  $val", string(' '^(3 + length(indstr) + 3), "+  $val"))
+        end
+        showstr = length(vals) == 0 ? summary(C) : "$(summary(C)):\n$(join(entrystrs,'\n'))"
+        @test sprint(show, MIME("text/plain"), C) == showstr
     end
 
-    @testset "displayheight=$displayheight" for displayheight in 0:11
+    @testset "displayheight=$displayheight" for displayheight in 0:18
         iocontext =
             IOContext(IOBuffer(), :displaysize => (displayheight, 80), :limit => true)
         dims = (5, 10, 2)
@@ -352,8 +385,220 @@ end
               [2,  3, 2]  =  0.4
               [2,  6, 2]  =  0.9
               [5, 10, 2]  =  0.3""",
+            12 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 7 stored entries:
+              [4,  1, 1]  =  0.0
+              [1,  2, 1]  =  0.5
+              [5,  4, 1]  =  0.2
+              [3,  7, 1]  =  0.8
+              [2,  3, 2]  =  0.4
+              [2,  6, 2]  =  0.9
+              [5, 10, 2]  =  0.3""",
+            13 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 7 stored entries:
+              [4,  1, 1]  =  0.0
+              [1,  2, 1]  =  0.5
+              [5,  4, 1]  =  0.2
+              [3,  7, 1]  =  0.8
+              [2,  3, 2]  =  0.4
+              [2,  6, 2]  =  0.9
+              [5, 10, 2]  =  0.3""",
+            14 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 7 stored entries:
+              [4,  1, 1]  =  0.0
+              [1,  2, 1]  =  0.5
+              [5,  4, 1]  =  0.2
+              [3,  7, 1]  =  0.8
+              [2,  3, 2]  =  0.4
+              [2,  6, 2]  =  0.9
+              [5, 10, 2]  =  0.3""",
+            15 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 7 stored entries:
+              [4,  1, 1]  =  0.0
+              [1,  2, 1]  =  0.5
+              [5,  4, 1]  =  0.2
+              [3,  7, 1]  =  0.8
+              [2,  3, 2]  =  0.4
+              [2,  6, 2]  =  0.9
+              [5, 10, 2]  =  0.3""",
+            16 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 7 stored entries:
+              [4,  1, 1]  =  0.0
+              [1,  2, 1]  =  0.5
+              [5,  4, 1]  =  0.2
+              [3,  7, 1]  =  0.8
+              [2,  3, 2]  =  0.4
+              [2,  6, 2]  =  0.9
+              [5, 10, 2]  =  0.3""",
+            17 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 7 stored entries:
+              [4,  1, 1]  =  0.0
+              [1,  2, 1]  =  0.5
+              [5,  4, 1]  =  0.2
+              [3,  7, 1]  =  0.8
+              [2,  3, 2]  =  0.4
+              [2,  6, 2]  =  0.9
+              [5, 10, 2]  =  0.3""",
+            18 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 7 stored entries:
+              [4,  1, 1]  =  0.0
+              [1,  2, 1]  =  0.5
+              [5,  4, 1]  =  0.2
+              [3,  7, 1]  =  0.8
+              [2,  3, 2]  =  0.4
+              [2,  6, 2]  =  0.9
+              [5, 10, 2]  =  0.3""",
         )[displayheight]
         C = SparseArrayCOO(dims, inds, vals)
+        @test sprint(
+            show,
+            MIME("text/plain"),
+            C;
+            context = IOContext(iocontext, :module => @__MODULE__),
+        ) == showstr
+
+        # SparseArrayCOO - with duplicate indices
+        showstr = Dict(
+            0 => "5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries: \u2026",
+            1 => "5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries: \u2026",
+            2 => "5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries: \u2026",
+            3 => "5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries: \u2026",
+            4 => "5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries: \u2026",
+            5 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+             \u22ee""",
+            6 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          \u22ee""",
+            7 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          \u22ee
+                          +  1.3""",
+            8 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+                          \u22ee
+                          +  1.3""",
+            9 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+                          \u22ee
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+            10 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+              [1,  2, 1]  =  0.5
+                          \u22ee
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+            11 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+              [1,  2, 1]  =  0.5
+                          \u22ee
+                          +  1.9
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+            12 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+              [1,  2, 1]  =  0.5
+                          +  1.5
+                          \u22ee
+                          +  1.9
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+            13 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+              [1,  2, 1]  =  0.5
+                          +  1.5
+                          \u22ee
+              [2,  6, 2]  =  0.9
+                          +  1.9
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+            14 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+              [1,  2, 1]  =  0.5
+                          +  1.5
+              [5,  4, 1]  =  0.2
+                          \u22ee
+              [2,  6, 2]  =  0.9
+                          +  1.9
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+            15 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+              [1,  2, 1]  =  0.5
+                          +  1.5
+              [5,  4, 1]  =  0.2
+                          \u22ee
+                          +  1.4
+              [2,  6, 2]  =  0.9
+                          +  1.9
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+            16 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+              [1,  2, 1]  =  0.5
+                          +  1.5
+              [5,  4, 1]  =  0.2
+                          +  1.2
+                          \u22ee
+                          +  1.4
+              [2,  6, 2]  =  0.9
+                          +  1.9
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+            17 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+              [1,  2, 1]  =  0.5
+                          +  1.5
+              [5,  4, 1]  =  0.2
+                          +  1.2
+                          \u22ee
+              [2,  3, 2]  =  0.4
+                          +  1.4
+              [2,  6, 2]  =  0.9
+                          +  1.9
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+            18 => """
+            5×10×2 SparseArrayCOO{Float32, UInt8, 3} with 14 stored entries:
+              [4,  1, 1]  =  0.0
+                          +  1.0
+              [1,  2, 1]  =  0.5
+                          +  1.5
+              [5,  4, 1]  =  0.2
+                          +  1.2
+              [3,  7, 1]  =  0.8
+                          +  1.8
+              [2,  3, 2]  =  0.4
+                          +  1.4
+              [2,  6, 2]  =  0.9
+                          +  1.9
+              [5, 10, 2]  =  0.3
+                          +  1.3""",
+        )[displayheight]
+        C = SparseArrayCOO(dims, [inds; inds], [vals; vals .+ 1])
         @test sprint(
             show,
             MIME("text/plain"),
@@ -384,6 +629,12 @@ end
 
         # SparseArrayCOO
         C = SparseArrayCOO(dims, inds, vals)
+        @test sprint(summary, C; context = :module => @__MODULE__) ==
+              "$(dimstr[N]) SparseArrayCOO{$Tv, $Ti, $N} $valstr"
+
+        # SparseArrayCOO - with duplicate indices
+        C = SparseArrayCOO(dims, [inds; inds], [vals; vals])
+        valstr = "with $(2 * length(vals)) stored entries"
         @test sprint(summary, C; context = :module => @__MODULE__) ==
               "$(dimstr[N]) SparseArrayCOO{$Tv, $Ti, $N} $valstr"
     end
