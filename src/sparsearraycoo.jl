@@ -6,6 +6,7 @@
 `N`-dimensional sparse array stored in the **COO**rdinate format.
 Elements are stored as a vector of indices (using type `Ti`)
 and a vector of values (of type `Tv`).
+Values for duplicate indices are summed.
 
 Fields:
 + `dims::Dims{N}`              : tuple of dimensions
@@ -25,18 +26,11 @@ struct SparseArrayCOO{Tv,Ti<:Integer,N} <: AbstractSparseArray{Tv,Ti,N}
         return new(dims, inds, vals)
     end
 end
-function SparseArrayCOO(dims::Dims{N}, inds::Vector{NTuple{N,Ti}},
-                        vals::Vector{Tv}) where {Tv,Ti<:Integer,N}
-    if issorted(inds; by = reverse)
-        _inds = inds
-        _vals = vals
-    else
-        perm = sortperm(inds; by = reverse)
-        _inds = inds[perm]
-        _vals = vals[perm]
-    end
-    SparseArrayCOO{Tv,Ti,N}(dims, _inds, _vals)
-end
+SparseArrayCOO(
+    dims::Dims{N},
+    inds::Vector{NTuple{N,Ti}},
+    vals::Vector{Tv},
+) where {Tv,Ti<:Integer,N} = SparseArrayCOO{Tv,Ti,N}(dims, inds, vals)
 
 """
     SparseArrayCOO{Tv,Ti<:Integer}(undef, dims)
@@ -102,21 +96,32 @@ size(A::SparseArrayCOO) = A.dims
 
 function getindex(A::SparseArrayCOO{Tv,<:Integer,N}, I::Vararg{Int,N}) where {Tv,N}
     @boundscheck checkbounds(A, I...)
-    ptr = searchsortedfirst(A.inds, I; by = reverse)
-    return (ptr == length(A.inds) + 1 || A.inds[ptr] != I) ? zero(Tv) : A.vals[ptr]
+    out = zero(Tv)
+    for (ind, val) in zip(A.inds, A.vals)
+        if ind == I
+            out += val
+        end
+    end
+    return out
 end
 
 function setindex!(A::SparseArrayCOO{Tv,Ti,N}, v, I::Vararg{Int,N}) where {Tv,Ti<:Integer,N}
     @boundscheck checkbounds(A, I...)
     ind, val = convert(NTuple{N,Ti}, I), convert(Tv, v)
-    ptr = searchsortedfirst(A.inds, ind; by = reverse)
-    if ptr == length(A.inds) + 1 || A.inds[ptr] != ind
-        if !iszero(val)
-            insert!(A.inds, ptr, ind)
-            insert!(A.vals, ptr, val)
+    done = false
+    for i in eachindex(A.inds, A.vals)
+        if A.inds[i] == I
+            if !done
+                A.vals[i] = val
+                done = true
+            else
+                A.vals[i] = zero(Tv)
+            end
         end
-    else
-        A.vals[ptr] = val
+    end
+    if !done
+        push!(A.inds, ind)
+        push!(A.vals, val)
     end
     return A
 end
@@ -127,22 +132,6 @@ IndexStyle(::Type{<:SparseArrayCOO}) = IndexCartesian()
 
 similar(::SparseArrayCOO{<:Any,Ti}, ::Type{Tv}, dims::Dims{N}) where {Tv,Ti<:Integer,N} =
     SparseArrayCOO{Tv,Ti,N}(undef, dims)
-
-## Overloads for improving efficiency
-
-# technically specializes the output since the state is different
-function iterate(A::SparseArrayCOO{Tv}, state=((eachindex(A),),1)) where {Tv}
-    idxstate, nextptr = state
-    y = iterate(idxstate...)
-    y === nothing && return nothing
-    if nextptr > length(A.inds) || A.inds[nextptr] != Tuple(y[1])
-        val = zero(Tv)
-    else
-        val = A.vals[nextptr]
-        nextptr += 1
-    end
-    val, ((idxstate[1], Base.tail(y)...), nextptr)
-end
 
 ## Utilities
 
@@ -164,28 +153,11 @@ end
 
 Check that the indices in `inds` are valid:
 + each index is in bounds (`1 ≤ inds[ptr][k] ≤ dims[k]`)
-+ the indices are sorted (`issorted(inds; by=CartesianIndex)`)
-+ the indices are all unique (`allunique(inds`)
 If not, throw an `ArgumentError`.
 """
 function check_coo_inds(dims::Dims{N}, inds::Vector{NTuple{N,Ti}}) where {Ti<:Integer,N}
-    # Check all the conditions in a single pass over inds for efficiency
-    itr = iterate(inds)
-    itr === nothing && return nothing
-    prevind, state = itr
-    checkbounds_dims(dims, prevind...)
-    itr = iterate(inds, state)
-    while itr !== nothing
-        thisind, state = itr
-        if reverse(prevind) < reverse(thisind)
-            checkbounds_dims(dims, thisind...)
-        elseif reverse(prevind) > reverse(thisind)
-            throw(ArgumentError("inds are not sorted"))
-        else
-            throw(ArgumentError("inds are not all unique"))
-        end
-        prevind = thisind
-        itr = iterate(inds, state)
+    for ind in inds
+        checkbounds_dims(dims, ind...)
     end
     return nothing
 end
