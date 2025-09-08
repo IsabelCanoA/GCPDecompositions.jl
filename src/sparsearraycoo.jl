@@ -3,7 +3,7 @@
 module SparseArrayCOOs
 
 # Imports
-import Base: size, getindex, setindex!, IndexStyle, similar
+import Base: size, getindex, setindex!, IndexStyle, similar, show, summary
 
 # Exports
 export SparseArrayCOO
@@ -141,7 +141,99 @@ IndexStyle(::Type{<:SparseArrayCOO}) = IndexCartesian()
 similar(::SparseArrayCOO{<:Any,Ti}, ::Type{Tv}, dims::Dims{N}) where {Tv,Ti<:Integer,N} =
     SparseArrayCOO{Tv,Ti,N}(undef, dims)
 
+show(io::IO, A::SparseArrayCOO) = invoke(show, Tuple{IO,Any}, io, A)
+function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
+    nstored, N = numstored(A), ndims(A)
+
+    # Print summary
+    summary(io, A)
+    iszero(nstored) && return
+    print(io, ":")
+
+    # Print stored entries
+    entrylines = get(io, :limit, false) ? displaysize(io)[1] - 4 : typemax(Int)
+    pad = map(ndigits, size(A))
+    if entrylines >= nstored                    # Enough space to print all the stored entries
+        for (ind, val) in storedpairs(A)
+            _print_ln_entry(io, pad, ind, val)
+        end
+    elseif entrylines <= 0                      # No space to print any of the stored entries
+        print(io, " \u2026")
+    elseif entrylines == 1                      # Only space to print vertical dots
+        print(io, '\n', " \u22ee")
+    elseif entrylines == 2                      # Only space to print first stored entry
+        ind, val = first(storedpairs(A))
+        _print_ln_entry(io, pad, ind, val)
+        print(io, '\n', ' '^(3 + sum(pad) + 2 * (N - 1) + 3), '\u22ee')
+    else                                        # Print the stored entries in two chunks
+        # Fetch vectors of entries
+        inds, vals = storedindices(A), storedvalues(A)
+
+        # First chunk
+        prechunk = div(entrylines - 1, 2, RoundUp)
+        for ptr in 1:prechunk
+            _print_ln_entry(io, pad, inds[ptr], vals[ptr])
+        end
+
+        # Dots
+        print(io, '\n', ' '^(3 + sum(pad) + 2 * (N - 1) + 3), '\u22ee')
+
+        # Second chunk
+        postchunk = div(entrylines - 1, 2, RoundDown)
+        for ptr in nstored-postchunk+1:nstored
+            _print_ln_entry(io, pad, inds[ptr], vals[ptr])
+        end
+    end
+end
+function _print_ln_entry(io::IO, pad::NTuple{N,Int}, ind::NTuple{N,<:Integer}, val) where {N}
+    print(io, '\n', "  [")
+    for k in 1:N
+        print(io, lpad(Int(ind[k]), pad[k]))
+        k == N || print(io, ", ")
+    end
+    print(io, "]  =  ", val)
+end
+
+function summary(io::IO, A::SparseArrayCOO)
+    invoke(summary, Tuple{IO,AbstractArray}, io, A)
+    nstored = numstored(A)
+    print(io, " with ", nstored, " stored ", nstored == 1 ? "entry" : "entries")
+end
+
 ## Utilities
+
+"""
+    numstored(A::SparseArrayCOO{Tv,Ti,N})
+
+Return the number of stored entries.
+Includes any stored numerical zeros and duplicates;
+use `count(!iszero,A)` to count the number of nonzeros.
+"""
+numstored(A::SparseArrayCOO) = length(A.vals)
+
+"""
+    storedindices(A::SparseArrayCOO{Tv,Ti,N})
+
+Return a `Vector{NTuple{N,Ti}}` of all the stored indices.
+May share underlying data with `A`.
+"""
+storedindices(A::SparseArrayCOO) = A.inds
+
+"""
+    storedvalues(A::SparseArrayCOO{Tv,Ti,N})
+
+Return a `Vector{Tv}` of all the stored values.
+May share underlying data with `A`.
+"""
+storedvalues(A::SparseArrayCOO) = A.vals
+
+"""
+    storedpairs(A::SparseArrayCOO{Tv,Ti,N})
+
+Return an iterator over index => value pairs for all the stored entries.
+May share underlying data with `A`.
+"""
+storedpairs(A::SparseArrayCOO) = Iterators.map(Pair, A.inds, A.vals)
 
 """
     check_coo_buffers(inds, vals)
