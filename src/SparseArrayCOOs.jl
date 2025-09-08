@@ -30,8 +30,11 @@ struct SparseArrayCOO{Tv,Ti<:Integer,N} <: AbstractArray{Tv,N}
     inds::Vector{NTuple{N,Ti}}      # Stored indices
     vals::Vector{Tv}                # Stored values
 
-    function SparseArrayCOO{Tv,Ti,N}(dims::Dims{N}, inds::Vector{NTuple{N,Ti}},
-                            vals::Vector{Tv}) where {Tv,Ti<:Integer,N}
+    function SparseArrayCOO{Tv,Ti,N}(
+        dims::Dims{N},
+        inds::Vector{NTuple{N,Ti}},
+        vals::Vector{Tv},
+    ) where {Tv,Ti<:Integer,N}
         check_Ti(dims, Ti)
         check_coo_buffers(inds, vals)
         check_coo_inds(dims, inds)
@@ -99,7 +102,7 @@ function SparseArrayCOO(Ti::Type{<:Integer}, A::AbstractArray)
     nzidx = findall(!iszero, A)
     inds = convert(Vector{NTuple{N,Ti}}, CartesianIndices(A)[nzidx])
     vals = convert(Vector{Tv}, A[nzidx])
-    SparseArrayCOO{Tv,Ti,N}(dims, inds, vals)
+    return SparseArrayCOO{Tv,Ti,N}(dims, inds, vals)
 end
 
 ## Minimal AbstractArray interface
@@ -189,19 +192,24 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
         end
     end
 end
-function _print_ln_entry(io::IO, pad::NTuple{N,Int}, ind::NTuple{N,<:Integer}, val) where {N}
+function _print_ln_entry(
+    io::IO,
+    pad::NTuple{N,Int},
+    ind::NTuple{N,<:Integer},
+    val,
+) where {N}
     print(io, '\n', "  [")
     for k in 1:N
         print(io, lpad(Int(ind[k]), pad[k]))
         k == N || print(io, ", ")
     end
-    print(io, "]  =  ", val)
+    return print(io, "]  =  ", val)
 end
 
 function summary(io::IO, A::SparseArrayCOO)
     invoke(summary, Tuple{IO,AbstractArray}, io, A)
     nstored = numstored(A)
-    print(io, " with ", nstored, " stored ", nstored == 1 ? "entry" : "entries")
+    return print(io, " with ", nstored, " stored ", nstored == 1 ? "entry" : "entries")
 end
 
 ## Utilities
@@ -246,9 +254,15 @@ Check that the `inds` and `vals` buffers are valid:
 + their lengths match (`length(inds) == length(vals)`)
 If not, throw an `ArgumentError`.
 """
-function check_coo_buffers(inds::Vector{NTuple{N,Ti}}, vals::Vector{Tv}) where {Tv,Ti<:Integer,N}
-    length(inds) == length(vals) ||
-        throw(ArgumentError("the buffer lengths (length(inds) = $(length(inds)), length(vals) = $(length(vals))) do not match"))
+function check_coo_buffers(
+    inds::Vector{NTuple{N,Ti}},
+    vals::Vector{Tv},
+) where {Tv,Ti<:Integer,N}
+    length(inds) == length(vals) || throw(
+        ArgumentError(
+            "the buffer lengths (length(inds) = $(length(inds)), length(vals) = $(length(vals))) do not match",
+        ),
+    )
     return nothing
 end
 
@@ -279,15 +293,23 @@ function check_Ti(dims::Dims{N}, Ti::Type) where {N}
     maxTi = typemax(Ti)
     for k in 1:N
         dim = dims[k]
-        dim >= 0 || throw(ArgumentError("the size along dimension $k (dims[$k] = $dim) is negative"))
-        dim <= maxTi ||
-            throw(ArgumentError("the size along dimension $k (dims[$k] = $dim) does not fit in Ti = $(Ti) (typemax($Ti) = $(typemax(Ti)))"))
+        dim >= 0 || throw(
+            ArgumentError("the size along dimension $k (dims[$k] = $dim) is negative"),
+        )
+        dim <= maxTi || throw(
+            ArgumentError(
+                "the size along dimension $k (dims[$k] = $dim) does not fit in Ti = $(Ti) (typemax($Ti) = $(typemax(Ti)))",
+            ),
+        )
     end
 
     # Check that corresponding length fits in Int
     len = reduce(widemul, dims)
-    len <= typemax(Int) ||
-        throw(ArgumentError("number of elements (length = $len) does not fit in Int (prevents linear indexing)"))
+    len <= typemax(Int) || throw(
+        ArgumentError(
+            "number of elements (length = $len) does not fit in Int (prevents linear indexing)",
+        ),
+    )
     # do not need to check that dims[k] <= typemax(Int) for CartesianIndex since eltype(dims) == Int
 
     return nothing
