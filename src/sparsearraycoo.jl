@@ -1,5 +1,14 @@
 ## Sparse array type
 
+module SparseArrayCOOs
+
+# Imports
+using SparseArrays: AbstractSparseArray
+import Base: size, getindex, setindex!, IndexStyle, similar
+
+# Exports
+export SparseArrayCOO
+
 """
     SparseArrayCOO{Tv,Ti<:Integer,N} <: AbstractSparseArray{Tv,Ti,N}
 
@@ -212,4 +221,6 @@ function checkbounds_dims(dims::Dims{N}, I::Vararg{Integer,N}) where {N}
     checkbounds_dims(Bool, dims, I...) ||
         throw(ArgumentError("index (= $I) out of bounds (dims = $dims)"))
     return nothing
+end
+
 end
