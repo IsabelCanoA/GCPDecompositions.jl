@@ -134,7 +134,7 @@ function setindex!(A::SparseArrayCOO{Tv,Ti,N}, v, I::Vararg{Int,N}) where {Tv,Ti
             end
         end
     end
-    if !done
+    if !done && !iszero(val)
         push!(A.inds, ind)
         push!(A.vals, val)
     end
