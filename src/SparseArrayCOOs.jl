@@ -151,6 +151,9 @@ similar(::SparseArrayCOO{<:Any,Ti}, ::Type{Tv}, dims::Dims{N}) where {Tv,Ti<:Int
 show(io::IO, A::SparseArrayCOO) = invoke(show, Tuple{IO,Any}, io, A)
 function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
     nstored, N = numstored(A), ndims(A)
+    inds, vals = storedindices(A), storedvalues(A)
+    perm = issorted(inds; by = reverse) ? (1:nstored) : sortperm(inds; by = reverse)
+    sinds, svals = view(inds, perm), view(vals, perm)
 
     # Print summary
     summary(io, A)
@@ -161,7 +164,7 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
     entrylines = get(io, :limit, false) ? displaysize(io)[1] - 4 : typemax(Int)
     pad = map(ndigits, size(A))
     if entrylines >= nstored                    # Enough space to print all the stored entries
-        for (ind, val) in storedpairs(A)
+        for (ind, val) in zip(sinds, svals)
             _print_ln_entry(io, pad, ind, val)
         end
     elseif entrylines <= 0                      # No space to print any of the stored entries
@@ -169,17 +172,14 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
     elseif entrylines == 1                      # Only space to print vertical dots
         print(io, '\n', " \u22ee")
     elseif entrylines == 2                      # Only space to print first stored entry
-        ind, val = first(storedpairs(A))
+        ind, val = sinds[1], svals[1]
         _print_ln_entry(io, pad, ind, val)
         print(io, '\n', ' '^(3 + sum(pad) + 2 * (N - 1) + 3), '\u22ee')
     else                                        # Print the stored entries in two chunks
-        # Fetch vectors of entries
-        inds, vals = storedindices(A), storedvalues(A)
-
         # First chunk
         prechunk = div(entrylines - 1, 2, RoundUp)
         for ptr in 1:prechunk
-            _print_ln_entry(io, pad, inds[ptr], vals[ptr])
+            _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
         end
 
         # Dots
@@ -188,7 +188,7 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
         # Second chunk
         postchunk = div(entrylines - 1, 2, RoundDown)
         for ptr in nstored-postchunk+1:nstored
-            _print_ln_entry(io, pad, inds[ptr], vals[ptr])
+            _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
         end
     end
 end

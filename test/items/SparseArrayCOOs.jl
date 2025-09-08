@@ -258,11 +258,9 @@ end
         vals = vals[1:nstored]
 
         # SparseArrayCOO
-        perm = sortperm(inds; by = CartesianIndex)
-        sinds, svals = inds[perm], vals[perm]
         C = SparseArrayCOO(dims, inds, vals)
         @test sprint(show, C; context = :module => @__MODULE__) ==
-              "SparseArrayCOO{$Tv, $Ti, $N}($dims, $sinds, $svals)"
+              "SparseArrayCOO{$Tv, $Ti, $N}($dims, $inds, $vals)"
     end
 end
 
