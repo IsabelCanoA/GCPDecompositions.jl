@@ -144,25 +144,6 @@ function iterate(A::SparseArrayCOO{Tv}, state=((eachindex(A),),1)) where {Tv}
     val, ((idxstate[1], Base.tail(y)...), nextptr)
 end
 
-## AbstractSparseArray interface
-
-function dropstored!(f::Function, A::SparseArrayCOO)
-    ptrs = findall(f, A.vals)
-    deleteat!(A.inds, ptrs)
-    deleteat!(A.vals, ptrs)
-    return A
-end
-
-numstored(A::SparseArrayCOO) = length(A.vals)
-storedindices(A::SparseArrayCOO) = A.inds
-storedvalues(A::SparseArrayCOO) = A.vals
-storedpairs(A::SparseArrayCOO) = Iterators.map(Pair, A.inds, A.vals)
-
-## AbstractSparseArray optional interface (internal)
-
-findall_stored(f::Function, A::SparseArrayCOO) =
-    [convert(keytype(A), CartesianIndex(ind)) for (ind, val) in storedpairs(A) if f(val)]
-
 ## Utilities
 
 """
