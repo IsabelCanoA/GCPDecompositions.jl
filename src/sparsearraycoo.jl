@@ -2,8 +2,12 @@
 
 module SparseArrayCOOs
 
-# Imports
-import Base: size, getindex, setindex!, IndexStyle, similar, show, summary
+# Imports: AbstractArray interface
+import Base: size, getindex, setindex!
+import Base: IndexStyle
+
+# Imports: Overloads for specializing outputs
+import Base: similar, show, summary
 
 # Exports
 export SparseArrayCOO
