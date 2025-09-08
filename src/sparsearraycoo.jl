@@ -1,9 +1,9 @@
-## SparseTensorCOO: coordinate format
+## Sparse array type
 
 """
-    SparseTensorCOO{Tv,Ti<:Integer,N} <: AbstractSparseTensor{Tv,Ti,N}
+    SparseArrayCOO{Tv,Ti<:Integer,N} <: AbstractSparseArray{Tv,Ti,N}
 
-`N`-dimensional sparse tensor stored in the **COO**rdinate format.
+`N`-dimensional sparse array stored in the **COO**rdinate format.
 Elements are stored as a vector of indices (using type `Ti`)
 and a vector of values (of type `Tv`).
 
@@ -12,12 +12,12 @@ Fields:
 + `inds::Vector{NTuple{N,Ti}}` : vector of indices
 + `vals::Vector{Tv}`           : vector of values
 """
-struct SparseTensorCOO{Tv,Ti<:Integer,N} <: AbstractSparseTensor{Tv,Ti,N}
+struct SparseArrayCOO{Tv,Ti<:Integer,N} <: AbstractSparseArray{Tv,Ti,N}
     dims::Dims{N}                   # Dimensions
     inds::Vector{NTuple{N,Ti}}      # Stored indices
     vals::Vector{Tv}                # Stored values
 
-    function SparseTensorCOO{Tv,Ti,N}(dims::Dims{N}, inds::Vector{NTuple{N,Ti}},
+    function SparseArrayCOO{Tv,Ti,N}(dims::Dims{N}, inds::Vector{NTuple{N,Ti}},
                             vals::Vector{Tv}) where {Tv,Ti<:Integer,N}
         check_Ti(dims, Ti)
         check_coo_buffers(inds, vals)
@@ -25,7 +25,7 @@ struct SparseTensorCOO{Tv,Ti<:Integer,N} <: AbstractSparseTensor{Tv,Ti,N}
         return new(dims, inds, vals)
     end
 end
-function SparseTensorCOO(dims::Dims{N}, inds::Vector{NTuple{N,Ti}},
+function SparseArrayCOO(dims::Dims{N}, inds::Vector{NTuple{N,Ti}},
                         vals::Vector{Tv}) where {Tv,Ti<:Integer,N}
     if issorted(inds; by = reverse)
         _inds = inds
@@ -35,14 +35,14 @@ function SparseTensorCOO(dims::Dims{N}, inds::Vector{NTuple{N,Ti}},
         _inds = inds[perm]
         _vals = vals[perm]
     end
-    SparseTensorCOO{Tv,Ti,N}(dims, _inds, _vals)
+    SparseArrayCOO{Tv,Ti,N}(dims, _inds, _vals)
 end
 
 """
-    SparseTensorCOO{Tv,Ti<:Integer}(undef, dims)
-    SparseTensorCOO{Tv,Ti<:Integer,N}(undef, dims)
+    SparseArrayCOO{Tv,Ti<:Integer}(undef, dims)
+    SparseArrayCOO{Tv,Ti<:Integer,N}(undef, dims)
 
-Construct an uninitialized `N`-dimensional `SparseTensorCOO`
+Construct an uninitialized `N`-dimensional `SparseArrayCOO`
 with indices using type `Ti` and elements of type `Tv`.
 Here uninitialized means it has no stored entries.
 
@@ -51,62 +51,62 @@ then it must match the length of `dims`.
 
 # Examples
 ```julia-repl
-julia> A = SparseTensorCOO{Float64, Int8, 3}(undef, (2, 3, 4)) # N given explicitly
-2×3×4 SparseTensorCOO{Float64, Int8, 3} with 0 stored entries
+julia> A = SparseArrayCOO{Float64, Int8, 3}(undef, (2, 3, 4)) # N given explicitly
+2×3×4 SparseArrayCOO{Float64, Int8, 3} with 0 stored entries
 
-julia> B = SparseTensorCOO{Float64, Int8}(undef, (4,)) # N determined by the input
-4-element SparseTensorCOO{Float64, Int8, 1} with 0 stored entries
+julia> B = SparseArrayCOO{Float64, Int8}(undef, (4,)) # N determined by the input
+4-element SparseArrayCOO{Float64, Int8, 1} with 0 stored entries
 
 julia> similar(B, 2, 4, 1) # use typeof(B), and the given size
-2×4×1 SparseTensorCOO{Float64, Int8, 3} with 0 stored entries
+2×4×1 SparseArrayCOO{Float64, Int8, 3} with 0 stored entries
 ```
 """
-SparseTensorCOO{Tv,Ti,N}(::UndefInitializer, dims::Dims{N}) where {Tv,Ti<:Integer,N} =
-    SparseTensorCOO(dims, Vector{NTuple{N,Ti}}(), Vector{Tv}())
-SparseTensorCOO{Tv,Ti}(::UndefInitializer, dims::Dims{N}) where {Tv,Ti<:Integer,N} =
-    SparseTensorCOO{Tv,Ti,N}(undef, dims)
+SparseArrayCOO{Tv,Ti,N}(::UndefInitializer, dims::Dims{N}) where {Tv,Ti<:Integer,N} =
+    SparseArrayCOO(dims, Vector{NTuple{N,Ti}}(), Vector{Tv}())
+SparseArrayCOO{Tv,Ti}(::UndefInitializer, dims::Dims{N}) where {Tv,Ti<:Integer,N} =
+    SparseArrayCOO{Tv,Ti,N}(undef, dims)
 
 """
-    SparseTensorCOO(Ti, A::AbstractArray)
+    SparseArrayCOO(Ti, A::AbstractArray)
 
-Convert an AbstractArray `A` into a `SparseTensorCOO`
+Convert an AbstractArray `A` into a `SparseArrayCOO`
 with indices using type `Ti`.
 
 # Examples
 ```julia-repl
-julia> A = SparseTensorCOO(Int8, Float16[1.1 0.0 0.0; 2.1 0.0 2.3])
-2×3 SparseTensorCOO{Float16, Int8, 2} with 3 stored entries:
+julia> A = SparseArrayCOO(Int8, Float16[1.1 0.0 0.0; 2.1 0.0 2.3])
+2×3 SparseArrayCOO{Float16, Int8, 2} with 3 stored entries:
   [1, 1]  =  1.1
   [2, 1]  =  2.1
   [2, 3]  =  2.3
 
-julia> B = SparseTensorCOO(Int16, Float16[1.1 0.0 0.0; 2.1 0.0 2.3])
-2×3 SparseTensorCOO{Float16, Int16, 2} with 3 stored entries:
+julia> B = SparseArrayCOO(Int16, Float16[1.1 0.0 0.0; 2.1 0.0 2.3])
+2×3 SparseArrayCOO{Float16, Int16, 2} with 3 stored entries:
   [1, 1]  =  1.1
   [2, 1]  =  2.1
   [2, 3]  =  2.3
 ```
 """
-function SparseTensorCOO(Ti::Type{<:Integer}, A::AbstractArray)
+function SparseArrayCOO(Ti::Type{<:Integer}, A::AbstractArray)
     Tv, N = eltype(A), ndims(A)
     dims = size(A)
     nzidx = findall(!iszero, A)
     inds = convert(Vector{NTuple{N,Ti}}, CartesianIndices(A)[nzidx])
     vals = convert(Vector{Tv}, A[nzidx])
-    SparseTensorCOO{Tv,Ti,N}(dims, inds, vals)
+    SparseArrayCOO{Tv,Ti,N}(dims, inds, vals)
 end
 
 ## Minimal AbstractArray interface
 
-size(A::SparseTensorCOO) = A.dims
+size(A::SparseArrayCOO) = A.dims
 
-function getindex(A::SparseTensorCOO{Tv,<:Integer,N}, I::Vararg{Int,N}) where {Tv,N}
+function getindex(A::SparseArrayCOO{Tv,<:Integer,N}, I::Vararg{Int,N}) where {Tv,N}
     @boundscheck checkbounds(A, I...)
     ptr = searchsortedfirst(A.inds, I; by = reverse)
     return (ptr == length(A.inds) + 1 || A.inds[ptr] != I) ? zero(Tv) : A.vals[ptr]
 end
 
-function setindex!(A::SparseTensorCOO{Tv,Ti,N}, v, I::Vararg{Int,N}) where {Tv,Ti<:Integer,N}
+function setindex!(A::SparseArrayCOO{Tv,Ti,N}, v, I::Vararg{Int,N}) where {Tv,Ti<:Integer,N}
     @boundscheck checkbounds(A, I...)
     ind, val = convert(NTuple{N,Ti}, I), convert(Tv, v)
     ptr = searchsortedfirst(A.inds, ind; by = reverse)
@@ -121,17 +121,17 @@ function setindex!(A::SparseTensorCOO{Tv,Ti,N}, v, I::Vararg{Int,N}) where {Tv,T
     return A
 end
 
-IndexStyle(::Type{<:SparseTensorCOO}) = IndexCartesian()
+IndexStyle(::Type{<:SparseArrayCOO}) = IndexCartesian()
 
 ## Overloads for specializing outputs
 
-similar(::SparseTensorCOO{<:Any,Ti}, ::Type{Tv}, dims::Dims{N}) where {Tv,Ti<:Integer,N} =
-    SparseTensorCOO{Tv,Ti,N}(undef, dims)
+similar(::SparseArrayCOO{<:Any,Ti}, ::Type{Tv}, dims::Dims{N}) where {Tv,Ti<:Integer,N} =
+    SparseArrayCOO{Tv,Ti,N}(undef, dims)
 
 ## Overloads for improving efficiency
 
 # technically specializes the output since the state is different
-function iterate(A::SparseTensorCOO{Tv}, state=((eachindex(A),),1)) where {Tv}
+function iterate(A::SparseArrayCOO{Tv}, state=((eachindex(A),),1)) where {Tv}
     idxstate, nextptr = state
     y = iterate(idxstate...)
     y === nothing && return nothing
@@ -144,23 +144,23 @@ function iterate(A::SparseTensorCOO{Tv}, state=((eachindex(A),),1)) where {Tv}
     val, ((idxstate[1], Base.tail(y)...), nextptr)
 end
 
-## AbstractSparseTensor interface
+## AbstractSparseArray interface
 
-function dropstored!(f::Function, A::SparseTensorCOO)
+function dropstored!(f::Function, A::SparseArrayCOO)
     ptrs = findall(f, A.vals)
     deleteat!(A.inds, ptrs)
     deleteat!(A.vals, ptrs)
     return A
 end
 
-numstored(A::SparseTensorCOO) = length(A.vals)
-storedindices(A::SparseTensorCOO) = A.inds
-storedvalues(A::SparseTensorCOO) = A.vals
-storedpairs(A::SparseTensorCOO) = Iterators.map(Pair, A.inds, A.vals)
+numstored(A::SparseArrayCOO) = length(A.vals)
+storedindices(A::SparseArrayCOO) = A.inds
+storedvalues(A::SparseArrayCOO) = A.vals
+storedpairs(A::SparseArrayCOO) = Iterators.map(Pair, A.inds, A.vals)
 
-## AbstractSparseTensor optional interface (internal)
+## AbstractSparseArray optional interface (internal)
 
-findall_stored(f::Function, A::SparseTensorCOO) =
+findall_stored(f::Function, A::SparseArrayCOO) =
     [convert(keytype(A), CartesianIndex(ind)) for (ind, val) in storedpairs(A) if f(val)]
 
 ## Utilities
