@@ -3,14 +3,13 @@
 module SparseArrayCOOs
 
 # Imports
-using SparseArrays: AbstractSparseArray
 import Base: size, getindex, setindex!, IndexStyle, similar
 
 # Exports
 export SparseArrayCOO
 
 """
-    SparseArrayCOO{Tv,Ti<:Integer,N} <: AbstractSparseArray{Tv,Ti,N}
+    SparseArrayCOO{Tv,Ti<:Integer,N} <: AbstractArray{Tv,N}
 
 `N`-dimensional sparse array stored in the **COO**rdinate format.
 Elements are stored as a vector of indices (using type `Ti`)
@@ -22,7 +21,7 @@ Fields:
 + `inds::Vector{NTuple{N,Ti}}` : vector of indices
 + `vals::Vector{Tv}`           : vector of values
 """
-struct SparseArrayCOO{Tv,Ti<:Integer,N} <: AbstractSparseArray{Tv,Ti,N}
+struct SparseArrayCOO{Tv,Ti<:Integer,N} <: AbstractArray{Tv,N}
     dims::Dims{N}                   # Dimensions
     inds::Vector{NTuple{N,Ti}}      # Stored indices
     vals::Vector{Tv}                # Stored values
