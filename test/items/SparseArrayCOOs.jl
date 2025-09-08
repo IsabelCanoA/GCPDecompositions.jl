@@ -1,7 +1,10 @@
 ## Sparse array type
 
 @testitem "constructor" begin
-    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, Int8]
+    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, Int8]
+
         dims = (5, 3, 2)[1:N]
         inds = (Ti[2, 1, 4], Ti[1, 3, 2], Ti[1, 2, 1])[1:N]
         inds = tuple.(inds...)
@@ -16,10 +19,18 @@
         # check_Ti(dims, Ti)
         @test_throws ArgumentError SparseArrayCOO{Tv,Ti,N}((-1, 3, 2)[1:N], inds, vals)
         if Ti !== Int
-            @test_throws ArgumentError SparseArrayCOO{Tv,Ti,N}((Int(typemax(Ti)) + 1, 3, 2)[1:N], inds, vals)
+            @test_throws ArgumentError SparseArrayCOO{Tv,Ti,N}(
+                (Int(typemax(Ti)) + 1, 3, 2)[1:N],
+                inds,
+                vals,
+            )
         end
         if N >= 2
-            @test_throws ArgumentError SparseArrayCOO{Tv,Ti,N}((typemax(Int) ÷ 2, 3, 2)[1:N], inds, vals)
+            @test_throws ArgumentError SparseArrayCOO{Tv,Ti,N}(
+                (typemax(Int) ÷ 2, 3, 2)[1:N],
+                inds,
+                vals,
+            )
         end
 
         # check_coo_buffers(inds, vals)
@@ -38,7 +49,10 @@
 end
 
 @testitem "undef constructors" begin
-    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, Int8]
+    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, Int8]
+
         dims = (5, 3, 2)[1:N]
 
         # SparseArrayCOO{Tv,Ti,N}(undef, dims)
@@ -58,10 +72,13 @@ end
 end
 
 @testitem "AbstractArray constructor" begin
-    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, Int8]
+    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, Int8]
+
         dims = (5, 3, 2)[1:N]
         inds = (Ti[2, 1, 4], Ti[1, 3, 2], Ti[1, 2, 1])[1:N]
-        inds = sort(tuple.(inds...); by=CartesianIndex)
+        inds = sort(tuple.(inds...); by = CartesianIndex)
         vals = Tv[1, 100, 10]
 
         # SparseArrayCOO(Ti, A::Array)
@@ -92,7 +109,10 @@ end
 end
 
 @testitem "getindex" begin
-    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, Int8]
+    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, Int8]
+
         dims = (6, 3, 2)[1:N]
         inds = (Ti[5, 1, 4], Ti[1, 3, 2], Ti[1, 2, 1])[1:N]
         vals = Tv[1, 0, 10]
@@ -113,13 +133,16 @@ end
         # duplicate indices
         A = SparseArrayCOO(dims, [tuple.(inds...); tuple.(inds...)], [vals; vals])
         for (ind, val) in zip(tuple.(inds...), vals)
-            @test A[ind...] == Tv(2*val)
+            @test A[ind...] == Tv(2 * val)
         end
     end
 end
 
 @testitem "setindex!" begin
-    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, Int8]
+    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, Int8]
+
         dims = (6, 3, 2)[1:N]
         inds = (Ti[5, 1, 4], Ti[1, 3, 2], Ti[1, 2, 1])[1:N]
         inds = tuple.(inds...)
@@ -167,7 +190,10 @@ end
 end
 
 @testitem "IndexStyle" begin
-    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, Int8]
+    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, Int8]
+
         @test IndexStyle(SparseArrayCOO{Tv,Ti,N}) === IndexCartesian()
     end
 end
@@ -175,7 +201,10 @@ end
 ## Overloads for specializing outputs
 
 @testitem "similar" begin
-    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, Int8]
+    @testset "N=$N, Ti=$Ti, Tv=$Tv" for N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, Int8]
+
         dims = (5, 3, 2)[1:N]
         inds = (Ti[2, 1, 4], Ti[1, 3, 2], Ti[1, 2, 1])[1:N]
         vals = Tv[1, 0, 10]
@@ -214,7 +243,11 @@ end
 end
 
 @testitem "show(io, A)" begin
-    @testset "nstored=$nstored, N=$N, Ti=$Ti, Tv=$Tv" for nstored in 0:3, N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, UInt8]
+    @testset "nstored=$nstored, N=$N, Ti=$Ti, Tv=$Tv" for nstored in 0:3,
+        N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, UInt8]
+
         dims = (10, 3, 2)[1:N]
         inds = (Ti[2, 1, 4], Ti[1, 3, 2], Ti[1, 2, 1])[1:N]
         inds = tuple.(inds...)
@@ -228,12 +261,17 @@ end
         perm = sortperm(inds; by = CartesianIndex)
         sinds, svals = inds[perm], vals[perm]
         C = SparseArrayCOO(dims, inds, vals)
-        @test sprint(show, C; context=:module=>@__MODULE__) == "SparseArrayCOO{$Tv, $Ti, $N}($dims, $sinds, $svals)"
+        @test sprint(show, C; context = :module => @__MODULE__) ==
+              "SparseArrayCOO{$Tv, $Ti, $N}($dims, $sinds, $svals)"
     end
 end
 
 @testitem "show(io, ::MIME\"text/plain\", A)" begin
-    @testset "nstored=$nstored, N=$N, Ti=$Ti, Tv=$Tv" for nstored in 0:3, N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, UInt8]
+    @testset "nstored=$nstored, N=$N, Ti=$Ti, Tv=$Tv" for nstored in 0:3,
+        N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, UInt8]
+
         dims = (10, 3, 2)[1:N]
         inds = (Ti[2, 1, 4], Ti[1, 3, 2], Ti[1, 2, 1])[1:N]
         inds = tuple.(inds...)
@@ -256,13 +294,15 @@ end
     end
 
     @testset "displayheight=$displayheight" for displayheight in 0:11
-        iocontext = IOContext(IOBuffer(), :displaysize => (displayheight, 80), :limit => true)
+        iocontext =
+            IOContext(IOBuffer(), :displaysize => (displayheight, 80), :limit => true)
         dims = (5, 10, 2)
-        inds = tuple.(
-            UInt8[4, 1, 2, 5, 5, 3, 2],
-            UInt8[1, 2, 3, 4, 10, 7, 6],
-            UInt8[1, 1, 2, 1, 2, 1, 2],
-        )
+        inds =
+            tuple.(
+                UInt8[4, 1, 2, 5, 5, 3, 2],
+                UInt8[1, 2, 3, 4, 10, 7, 6],
+                UInt8[1, 1, 2, 1, 2, 1, 2],
+            )
         vals = Float32[0.0, 0.5, 0.4, 0.2, 0.3, 0.8, 0.9]
 
         # SparseArrayCOO
@@ -316,12 +356,21 @@ end
               [5, 10, 2]  =  0.3""",
         )[displayheight]
         C = SparseArrayCOO(dims, inds, vals)
-        @test sprint(show, MIME("text/plain"), C; context = IOContext(iocontext, :module=>@__MODULE__)) == showstr
+        @test sprint(
+            show,
+            MIME("text/plain"),
+            C;
+            context = IOContext(iocontext, :module => @__MODULE__),
+        ) == showstr
     end
 end
 
 @testitem "summary(io, A)" begin
-    @testset "nstored=$nstored, N=$N, Ti=$Ti, Tv=$Tv" for nstored in 0:3, N in 1:3, Ti in [Int, UInt8], Tv in [Float64, BigFloat, UInt8]
+    @testset "nstored=$nstored, N=$N, Ti=$Ti, Tv=$Tv" for nstored in 0:3,
+        N in 1:3,
+        Ti in [Int, UInt8],
+        Tv in [Float64, BigFloat, UInt8]
+
         dims = (10, 3, 2)[1:N]
         inds = (Ti[2, 1, 4], Ti[1, 3, 2], Ti[1, 2, 1])[1:N]
         inds = tuple.(inds...)
@@ -337,6 +386,7 @@ end
 
         # SparseArrayCOO
         C = SparseArrayCOO(dims, inds, vals)
-        @test sprint(summary, C; context=:module=>@__MODULE__) == "$(dimstr[N]) SparseArrayCOO{$Tv, $Ti, $N} $valstr"
+        @test sprint(summary, C; context = :module => @__MODULE__) ==
+              "$(dimstr[N]) SparseArrayCOO{$Tv, $Ti, $N} $valstr"
     end
 end
