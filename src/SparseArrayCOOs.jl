@@ -152,8 +152,6 @@ show(io::IO, A::SparseArrayCOO) = invoke(show, Tuple{IO,Any}, io, A)
 function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
     nstored, N = numstored(A), ndims(A)
     inds, vals = storedindices(A), storedvalues(A)
-    perm = issorted(inds; by = reverse) ? (1:nstored) : sortperm(inds; by = reverse)
-    sinds, svals = view(inds, perm), view(vals, perm)
 
     # Print summary
     summary(io, A)
@@ -164,6 +162,8 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
     entrylines = get(io, :limit, false) ? displaysize(io)[1] - 4 : typemax(Int)
     pad = map(ndigits, size(A))
     if entrylines >= nstored                    # Enough space to print all the stored entries
+        perm = issorted(inds; by = reverse) ? (1:nstored) : sortperm(inds; by = reverse)
+        sinds, svals = view(inds, perm), view(vals, perm)
         for ptr in 1:nstored
             if ptr == 1 || sinds[ptr] != sinds[ptr-1]
                 _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
@@ -176,12 +176,18 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
     elseif entrylines == 1                      # Only space to print vertical dots
         print(io, '\n', " \u22ee")
     elseif entrylines == 2                      # Only space to print first stored entry
-        ind, val = sinds[1], svals[1]
+        ptr = findmin(reverse, inds)[2]
+        ind, val = inds[ptr], vals[ptr]
         _print_ln_entry(io, pad, ind, val)
         print(io, '\n', ' '^(3 + sum(pad) + 2 * (N - 1) + 3), '\u22ee')
     else                                        # Print the stored entries in two chunks
+        # Check if indices are already sorted
+        indsorted = issorted(inds; by = reverse)
+
         # First chunk
         prechunk = div(entrylines - 1, 2, RoundUp)
+        perm = indsorted ? (1:prechunk) : partialsortperm(inds, 1:prechunk; by = reverse)
+        sinds, svals = view(inds, perm), view(vals, perm)
         for ptr in 1:prechunk
             if ptr == 1 || sinds[ptr] != sinds[ptr-1]
                 _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
@@ -195,7 +201,11 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
 
         # Second chunk
         postchunk = div(entrylines - 1, 2, RoundDown)
-        for ptr in nstored-postchunk+1:nstored
+        perm =
+            indsorted ? (nstored-postchunk:nstored) :
+            partialsortperm(inds, nstored-postchunk:nstored; by = reverse)
+        sinds, svals = view(inds, perm), view(vals, perm)
+        for ptr in 2:postchunk+1
             if sinds[ptr] != sinds[ptr-1]
                 _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
             else
