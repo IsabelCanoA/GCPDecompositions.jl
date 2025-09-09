@@ -186,6 +186,7 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
         ptr = findmin(reverse, inds)[2]
         ind, val = inds[ptr], vals[ptr]
         _print_ln_entry(io, pad, ind, val)
+        !isnothing(findnext(==(ind), inds, ptr + 1)) && print(io, "  +  \u2026")
         print(io, '\n', ' '^(3 + sum(pad) + 2 * (N - 1) + 3), '\u22ee')
     else                                        # Print the stored entries in two chunks
         # Check if indices are already sorted
@@ -193,7 +194,8 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
 
         # First chunk
         prechunk = div(entrylines - 1, 2, RoundUp)
-        perm = indsorted ? (1:prechunk) : partialsortperm(inds, 1:prechunk; by = reverse)
+        perm =
+            indsorted ? (1:prechunk+1) : partialsortperm(inds, 1:prechunk+1; by = reverse)
         sinds, svals = view(inds, perm), view(vals, perm)
         for ptr in 1:prechunk
             if ptr == 1 || sinds[ptr] != sinds[ptr-1]
@@ -202,6 +204,7 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
                 _print_ln_dup_entry(io, pad, svals[ptr])
             end
         end
+        sinds[prechunk+1] == sinds[prechunk] && print(io, "  +  \u2026")
 
         # Dots
         print(io, '\n', ' '^(3 + sum(pad) + 2 * (N - 1) + 3), '\u22ee')
@@ -215,6 +218,8 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
         for ptr in 2:postchunk+1
             if sinds[ptr] != sinds[ptr-1]
                 _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
+            elseif ptr == 2
+                _print_ln_entry(io, pad, sinds[ptr], svals[ptr], true)
             else
                 _print_ln_dup_entry(io, pad, svals[ptr])
             end
@@ -226,13 +231,14 @@ function _print_ln_entry(
     pad::NTuple{N,Int},
     ind::NTuple{N,<:Integer},
     val,
+    predots = false,
 ) where {N}
     print(io, '\n', "  [")
     for k in 1:N
         print(io, lpad(Int(ind[k]), pad[k]))
         k == N || print(io, ", ")
     end
-    return print(io, "]  =  ", val)
+    return print(io, "]  =  ", predots ? "\u2026  +  " : "", val)
 end
 function _print_ln_dup_entry(io::IO, pad::NTuple{N,Int}, val) where {N}
     print(io, '\n', "   ")
