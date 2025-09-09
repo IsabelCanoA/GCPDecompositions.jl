@@ -331,7 +331,7 @@ end
         perm = sortperm(inds; by = CartesianIndex)
         sinds, svals = inds[perm], vals[perm]
         C = SparseArrayCOO(dims, [inds; inds], [vals; vals])
-        entrystrs = Iterators.flatmap(sinds, svals) do ind, val
+        entrystrs = (Iterators.flatten ∘ map)(sinds, svals) do ind, val
             indstr = join(lpad.(Int.(ind), ndigits.(dims)), ", ")
             return ("  [$indstr]  =  $val", string(' '^(3 + length(indstr) + 3), "+  $val"))
         end
