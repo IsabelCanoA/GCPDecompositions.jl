@@ -158,7 +158,7 @@ similar(::SparseArrayCOO{<:Any,Ti}, ::Type{Tv}, dims::Dims{N}) where {Tv,Ti<:Int
 show(io::IO, A::SparseArrayCOO) = invoke(show, Tuple{IO,Any}, io, A)
 function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
     nstored, N = numstored(A), ndims(A)
-    inds, vals = storedindices(A), storedvalues(A)
+    inds, vals = A.inds, A.vals
 
     # Print summary
     summary(io, A)
@@ -259,30 +259,6 @@ Includes any stored numerical zeros and duplicates;
 use `count(!iszero,A)` to count the number of nonzeros.
 """
 numstored(A::SparseArrayCOO) = length(A.vals)
-
-"""
-    storedindices(A::SparseArrayCOO{Tv,Ti,N})
-
-Return a `Vector{NTuple{N,Ti}}` of all the stored indices.
-May share underlying data with `A`.
-"""
-storedindices(A::SparseArrayCOO) = A.inds
-
-"""
-    storedvalues(A::SparseArrayCOO{Tv,Ti,N})
-
-Return a `Vector{Tv}` of all the stored values.
-May share underlying data with `A`.
-"""
-storedvalues(A::SparseArrayCOO) = A.vals
-
-"""
-    storedpairs(A::SparseArrayCOO{Tv,Ti,N})
-
-Return an iterator over index => value pairs for all the stored entries.
-May share underlying data with `A`.
-"""
-storedpairs(A::SparseArrayCOO) = Iterators.map(Pair, A.inds, A.vals)
 
 """
     check_coo_buffers(inds, vals)
