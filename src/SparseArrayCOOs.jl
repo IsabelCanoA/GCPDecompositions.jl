@@ -76,7 +76,7 @@ SparseArrayCOO{Tv,Ti}(::UndefInitializer, dims::Dims{N}) where {Tv,Ti<:Integer,N
     SparseArrayCOO{Tv,Ti,N}(undef, dims)
 
 """
-    SparseArrayCOO(Ti, A::AbstractArray)
+    SparseArrayCOO([Ti=Int], A::AbstractArray)
 
 Convert an AbstractArray `A` into a `SparseArrayCOO`
 with indices using type `Ti`.
@@ -94,6 +94,12 @@ julia> B = SparseArrayCOO(Int16, Float16[1.1 0.0 0.0; 2.1 0.0 2.3])
   [1, 1]  =  1.1
   [2, 1]  =  2.1
   [2, 3]  =  2.3
+
+julia> C = SparseArrayCOO(Float16[1.1 0.0 0.0; 2.1 0.0 2.3])
+2×3 SparseArrayCOO{Float16, Int64, 2} with 3 stored entries:
+  [1, 1]  =  1.1
+  [2, 1]  =  2.1
+  [2, 3]  =  2.3
 ```
 """
 function SparseArrayCOO(Ti::Type{<:Integer}, A::AbstractArray)
@@ -104,6 +110,7 @@ function SparseArrayCOO(Ti::Type{<:Integer}, A::AbstractArray)
     vals = convert(Vector{Tv}, A[nzidx])
     return SparseArrayCOO{Tv,Ti,N}(dims, inds, vals)
 end
+SparseArrayCOO(A::AbstractArray) = SparseArrayCOO(Int, A)
 
 ## Minimal AbstractArray interface
 

@@ -96,6 +96,21 @@ end
         @test C.dims === dims
         @test C.inds == inds && C.vals == vals
     end
+
+    @testset "N=$N, Tv=$Tv" for N in 1:3, Tv in [Float64, BigFloat, Int8]
+        dims = (5, 3, 2)[1:N]
+        inds = ([2, 1, 4], [1, 3, 2], [1, 2, 1])[1:N]
+        inds = sort(tuple.(inds...); by = CartesianIndex)
+        vals = Tv[1, 100, 10]
+
+        # SparseArrayCOO(A::Array)
+        A = zeros(Tv, dims)
+        A[CartesianIndex.(inds)] = vals
+        C = SparseArrayCOO(A)
+        @test typeof(C) === SparseArrayCOO{Tv,Int,N}
+        @test C.dims === dims
+        @test C.inds == inds && C.vals == vals
+    end
 end
 
 ## Minimal AbstractArray interface
