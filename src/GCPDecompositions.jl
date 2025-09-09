@@ -11,6 +11,11 @@ import LinearAlgebra: norm
 using IntervalSets: Interval
 using Random: default_rng
 
+# Import sparse array module and export data type
+include("SparseArrayCOOs.jl")
+using .SparseArrayCOOs
+export SparseArrayCOO
+
 # Exports
 export CPD
 export ncomps, normalizecomps, normalizecomps!, permutecomps, permutecomps!
