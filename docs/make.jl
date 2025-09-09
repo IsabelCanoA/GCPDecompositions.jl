@@ -32,6 +32,7 @@ makedocs(;
             "Loss functions" => "man/losses.md",
             "Constraints" => "man/constraints.md",
             "Algorithms" => "man/algorithms.md",
+            "Sparse Tensors" => "man/sparsetensors.md",
         ],
         "Demos" => [
             "Overview" => "demos/main.md",
