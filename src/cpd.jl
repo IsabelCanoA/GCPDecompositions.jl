@@ -245,7 +245,7 @@ it must be the symbol `:λ`, an integer in `1:ndims(M)`, or a collection of thes
 
 For the remaining keyword arguments, see the documentation of `sort!`.
 
-See also: `sortcomps!`, `sort`, `sort!`.
+See also: `permutecomps`, `permutecomps!`, `sortcomps!`, `sort`, `sort!`.
 """
 sortcomps(M::CPD; dims = :λ, order::Ordering = Reverse, kwargs...) =
     sortcomps!(deepcopy(M); dims, order, kwargs...)
@@ -258,7 +258,7 @@ it must be the symbol `:λ`, an integer in `1:ndims(M)`, or a collection of thes
 
 For the remaining keyword arguments, see the documentation of `sort!`.
 
-See also: `sortcomps`, `sort`, `sort!`.
+See also: `permutecomps`, `permutecomps!`, `sortcomps`, `sort`, `sort!`.
 """
 sortcomps!(M::CPD; dims = :λ, order::Ordering = Reverse, kwargs...) =
     permutecomps!(M, sortperm(_sortvals(M, dims); order, kwargs...))
