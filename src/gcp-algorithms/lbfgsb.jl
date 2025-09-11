@@ -62,8 +62,8 @@ function _gcp(
     end
 
     # Initialization
-    M0 = normalizecomps(init; dims = :λ, distribute_to = 1:ndims(M))
-    u0 = vcat(vec.(M0.U)...)
+    U0 = normalizecomps(init; dims = :λ, distribute_to = 1:ndims(init)).U
+    u0 = vcat(vec.(U0)...)
 
     # Setup vectorized objective function and gradient
     vec_cutoffs = (0, cumsum(r .* size(X))...)
