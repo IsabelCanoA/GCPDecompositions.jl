@@ -248,7 +248,7 @@ For the remaining keyword arguments, see the documentation of `sort!`.
 See also: `sortcomps!`, `sort`, `sort!`.
 """
 sortcomps(M::CPD; dims = :λ, order::Ordering = Reverse, kwargs...) =
-    permutecomps(M, sortperm(_sortvals(M, dims); order, kwargs...))
+    sortcomps!(deepcopy(M); dims, order, kwargs...)
 
 """
     sortcomps!(M::CPD; dims=:λ, alg::Algorithm=DEFAULT_UNSTABLE, lt=isless, by=identity, rev::Bool=false, order::Ordering=Reverse)
