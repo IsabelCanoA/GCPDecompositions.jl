@@ -312,7 +312,7 @@ end
 
         @testset "dims=$dims" for dims in [:λ; 1:N]
             Msort = sortcomps(M; dims)
-            perm = sortperm(dims == :λ ? M.λ : eachcol(M.U[dims]); rev = true)
+            perm = sortperm(dims == :λ ? M.λ : collect(eachcol(M.U[dims])); rev = true)
             @test Msort.λ == M.λ[perm]
             for k in 1:N
                 @test Msort.U[k] == M.U[k][:, perm]
