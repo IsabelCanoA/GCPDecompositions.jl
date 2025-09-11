@@ -18,7 +18,7 @@ using .SparseArrayCOOs
 export SparseArrayCOO
 
 # Exports
-export CPD, CPDComp
+export CPD
 export ncomps,
     normalizecomps, normalizecomps!, permutecomps, permutecomps!, sortcomps, sortcomps!
 export gcp
@@ -26,7 +26,6 @@ export GCPLosses, GCPConstraints, GCPAlgorithms
 
 include("tensor-kernels.jl")
 include("cpd.jl")
-include("cpdcomp.jl")
 include("gcp-losses.jl")
 include("gcp-constraints.jl")
 include("gcp-algorithms.jl")
