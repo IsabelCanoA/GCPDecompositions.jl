@@ -372,10 +372,13 @@ end
         r in 1:2,
         β in [0, 0.5, 1]
 
+        # Generate data:
+        # + for β > 0, use Poisson distribution
+        # + for β = 0, use Exponential distribution (seems better behaved)
         Random.seed!(0)
         M = CPD(ones(r), rand.(sz, r))
-        # May want to consider other distributions depending on value of β
-        X = [rand(Poisson(M[I])) for I in CartesianIndices(size(M))]
+        dist = iszero(β) ? Exponential : Poisson
+        X = [rand(dist(M[I])) for I in CartesianIndices(size(M))]
 
         function beta_value(β, x, m)
             if β == 0
