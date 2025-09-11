@@ -8,6 +8,7 @@ import Base: ndims, size, show, summary
 import Base: getindex
 import Base: AbstractArray, Array
 import LinearAlgebra: norm
+using Base.Order: Ordering, Reverse
 using IntervalSets: Interval
 using Random: default_rng
 
@@ -18,7 +19,8 @@ export SparseArrayCOO
 
 # Exports
 export CPD
-export ncomps, normalizecomps, normalizecomps!, permutecomps, permutecomps!
+export ncomps,
+    normalizecomps, normalizecomps!, permutecomps, permutecomps!, sortcomps, sortcomps!
 export gcp
 export GCPLosses, GCPConstraints, GCPAlgorithms
 

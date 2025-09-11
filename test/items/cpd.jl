@@ -300,3 +300,23 @@ end
         end
     end
 end
+
+@testitem "sortcomps" begin
+    @testset "N=$N, K=$K" for N in 1:3, K in 1:3
+        T = Float64
+        λfull = T[1, 100, 10000]
+        U1full, U2full, U3full = T[1 2 3; 4 5 6], T[-1 0 1], T[1 2 3; 4 5 6; 7 8 9]
+        λ = λfull[1:K]
+        U = (U1full[:, 1:K], U2full[:, 1:K], U3full[:, 1:K])[1:N]
+        M = CPD(λ, U)
+
+        @testset "dims=$dims" for dims in [:λ; 1:N]
+            Msort = sortcomps(M; dims)
+            perm = sortperm(dims == :λ ? M.λ : collect(eachcol(M.U[dims])); rev = true)
+            @test Msort.λ == M.λ[perm]
+            for k in 1:N
+                @test Msort.U[k] == M.U[k][:, perm]
+            end
+        end
+    end
+end
