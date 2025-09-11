@@ -12,13 +12,15 @@
 | `NORMALIZE(X,N)` | `normalizecomps(X; distribute_to=N)` |
 | `NORMALIZE(X,0)` | `normalizecomps(X; distribute_to=1:ndims(X))` |
 | `NORMALIZE(X,[])` | `normalizecomps(X)` |
-| `NORMALIZE(X,'sort')` | TODO |
+| `NORMALIZE(X,'sort')` | `sortcomps!(normalizecomps(X))` |
 | `NORMALIZE(X,N,1)` | `normalizecomps(X, 1; distribute_to=N)` |
 | `NORMALIZE(X,0,1)` | `normalizecomps(X, 1; distribute_to=1:ndims(X))` |
 | `NORMALIZE(X,[],1)` | `normalizecomps(X, 1)` |
-| `NORMALIZE(X,'sort',1)` | TODO |
+| `NORMALIZE(X,'sort',1)` | `sortcomps!(normalizecomps(X, 1))` |
 | `NORMALIZE(X,[],1,I)` | `normalizecomps(X, 1; dims=I)` |
 | `NORMALIZE(X,[],2,I)` | `normalizecomps(X, 2; dims=I)` |
+| `X = ARRANGE(X)` | `sortcomps!(normalizecomps!(X))` |
+| `X = ARRANGE(X,N)` | `sortcomps!(normalizecomps!(X; distribute_to=N); dims=N, by=norm)` |
 | `X = ARRANGE(X,P)` where `P` is a permutation | `permutecomps!(X, P)` |
 
 ## Noteworthy differences
