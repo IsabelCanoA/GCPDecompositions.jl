@@ -1,8 +1,17 @@
-using Documenter, GCPDecompositions
-using PlutoStaticHTML
-using InteractiveUtils
+using GCPDecompositions
+using Documenter, InteractiveUtils
+
+# Setup
+DocMeta.setdocmeta!(
+    GCPDecompositions,
+    :DocTestSetup,
+    :(using GCPDecompositions);
+    recursive = true,
+)
+ENV["LINES"] = 9
 
 # Render demos
+using PlutoStaticHTML
 DEMO_DIR = joinpath(pkgdir(GCPDecompositions), "docs", "src", "demos")
 DEMO_DICT = build_notebooks(
     BuildOptions(DEMO_DIR; previous_dir = DEMO_DIR, output_format = documenter_output),
@@ -13,6 +22,7 @@ DEMO_FILES = keys(DEMO_DICT)
 # Make docs
 makedocs(;
     modules = [GCPDecompositions],
+    authors = "David Hong <hong@udel.edu> and contributors",
     sitename = "GCPDecompositions.jl",
     pages = [
         "Home" => "index.md",
@@ -22,6 +32,7 @@ makedocs(;
             "Loss functions" => "man/losses.md",
             "Constraints" => "man/constraints.md",
             "Algorithms" => "man/algorithms.md",
+            "Sparse Tensors" => "man/sparsetensors.md",
         ],
         "Demos" => [
             "Overview" => "demos/main.md",
@@ -42,9 +53,11 @@ makedocs(;
     ],
     format = Documenter.HTML(;
         canonical = "https://dahong67.github.io/GCPDecompositions.jl",
-        size_threshold = 2^21
+        edit_link = "master",
+        assets = String[],
+        size_threshold = 2^21,
     ),
 )
 
 # Deploy docs
-deploydocs(; repo = "github.com/dahong67/GCPDecompositions.jl.git")
+deploydocs(; repo = "github.com/dahong67/GCPDecompositions.jl", devbranch = "master")

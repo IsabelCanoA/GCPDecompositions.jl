@@ -1,7 +1,7 @@
 name = "GCPDecompositions"
 uuid = "f59fb95b-1bc8-443b-b347-5e445a549f37"
 authors = ["David Hong <hong@udel.edu> and contributors"]
-version = "0.3.0"
+version = "0.3.1"
 
 [deps]
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
@@ -20,10 +20,10 @@ LossFunctionsExt = "LossFunctions"
 
 [compat]
 Compat = "3.42, 4"
-ForwardDiff = "0.10.36"
+ForwardDiff = "0.10.36, 1"
 IntervalSets = "0.7.7"
 LBFGSB = "0.4.1"
 LinearAlgebra = "1.6"
-LossFunctions = "0.11.1"
+LossFunctions = "0.11.1, 1"
 Random = "1.6"
 julia = "1.6"
