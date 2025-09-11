@@ -62,7 +62,7 @@ function _gcp(
     end
 
     # Initialization
-    M0 = deepcopy(init)
+    M0 = normalizecomps(init; dims = :λ, distribute_to = 1:ndims(M))
     u0 = vcat(vec.(M0.U)...)
 
     # Setup vectorized objective function and gradient
