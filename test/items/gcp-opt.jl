@@ -368,7 +368,7 @@ end
     using Random, IntervalSets
     using Distributions
 
-    @testset "size(X)=$sz, rank(X)=$r, β" for sz in [(15, 20, 25), (50, 40, 30)],
+    @testset "size(X)=$sz, rank(X)=$r, β=$β" for sz in [(15, 20, 25), (50, 40, 30)],
         r in 1:2,
         β in [0, 0.5, 1]
 
