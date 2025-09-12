@@ -23,6 +23,7 @@
 | `X = ARRANGE(X,N)` | `sortcomps!(normalizecomps!(X; distribute_to=N); dims=N, by=norm)` |
 | `X = ARRANGE(X,P)` where `P` is a permutation | `permutecomps!(X, P)` |
 | `X = REDISTRIBUTE(X,N)` | `normalizecomps!(X; dims=:λ, distribute_to=2)` |
+| `B = PERMUTE(A,ORDER)` | `permutedims(A, ORDER)` |
 
 ## Noteworthy differences
 
