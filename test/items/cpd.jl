@@ -27,6 +27,35 @@
     end
 end
 
+@testitem "destructuring" begin
+    λ = [1, 100, 10000]
+    U1, U2, U3 = [1 2 3; 4 5 6], [-1 0 1], [1 2 3; 4 5 6; 7 8 9]
+
+    # ndims = 1
+    λd, (U1d,) = CPD(λ, (U1,))
+    @test λd === λ
+    @test U1d === U1
+    @test iterate(CPD(λ, (U1,)), Val(:done)) === nothing
+    @test_throws BoundsError λd, (U1d,), test = CPD(λ, (U1,))
+
+    # ndims = 2
+    λd, (U1d, U2d) = CPD(λ, (U1, U2))
+    @test λd === λ
+    @test U1d === U1
+    @test U2d === U2
+    @test iterate(CPD(λ, (U1, U2)), Val(:done)) === nothing
+    @test_throws BoundsError λd, (U1d, U2d), test = CPD(λ, (U1, U2))
+
+    # ndims = 3
+    λd, (U1d, U2d, U3d) = CPD(λ, (U1, U2, U3))
+    @test λd === λ
+    @test U1d === U1
+    @test U2d === U2
+    @test U3d === U3
+    @test iterate(CPD(λ, (U1, U2, U3)), Val(:done)) === nothing
+    @test_throws BoundsError λd, (U1d, U2d, U3d), test = CPD(λ, (U1, U2, U3))
+end
+
 @testitem "ncomps" begin
     λ = [1, 100, 10000]
     U1, U2, U3 = [1 2 3; 4 5 6], [-1 0 1], [1 2 3; 4 5 6; 7 8 9]
