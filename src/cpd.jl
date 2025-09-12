@@ -31,6 +31,11 @@ end
 CPD(λ::Tλ, U::NTuple{N,TU}) where {T,N,Tλ<:AbstractVector{T},TU<:AbstractMatrix{T}} =
     CPD{T,N,Tλ,TU}(λ, U)
 
+# destructuring
+Base.iterate(M::CPD) = (M.λ, Val(:U))
+Base.iterate(M::CPD, ::Val{:U}) = (M.U, Val(:done))
+Base.iterate(::CPD, ::Val{:done}) = nothing
+
 """
     ncomps(M::CPD)
 
