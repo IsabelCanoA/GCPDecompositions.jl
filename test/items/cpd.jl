@@ -172,6 +172,32 @@ end
     end
 end
 
+@testitem "permutedims" begin
+    using Combinatorics
+
+    @testset "N=$N, K=$K" for N in 1:3, K in 1:3
+        T = Float64
+        λfull = T[1, 100, 10000]
+        U1full, U2full, U3full = T[1 2 3; 4 5 6], T[-1 0 1], T[1 2 3; 4 5 6; 7 8 9]
+        λ = λfull[1:K]
+        U = (U1full[:, 1:K], U2full[:, 1:K], U3full[:, 1:K])[1:N]
+        M = CPD(λ, U)
+
+        # check valid permutations
+        @testset "perm=$perm" for perm in permutations(1:N)
+            Mperm = permutedims(M, perm)
+            @test Mperm.λ === M.λ
+            @test all(k -> Mperm.U[k] === M.U[perm[k]], 1:ndims(Mperm))
+        end
+
+        # check invalid permutation - wrong length
+        @test_throws ArgumentError permutedims(M, (1, 2, 3, 4))
+
+        # check invalid permutation - !isperm
+        @test_throws ArgumentError permutedims(M, fill(2, N))
+    end
+end
+
 @testitem "normalizecomps" begin
     using LinearAlgebra
     zero_to_one(x) = iszero(x) ? oneunit(x) : x
