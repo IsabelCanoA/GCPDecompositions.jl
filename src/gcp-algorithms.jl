@@ -13,7 +13,7 @@ using IntervalSets: Interval
 using LinearAlgebra: lu!, mul!, norm, rdiv!, rmul!, Diagonal
 using LBFGSB: lbfgsb
 
-# Algorithms
+# Abstract Algorithm Interface
 
 """
     AbstractAlgorithm
@@ -36,11 +36,13 @@ a `CPD` object.
 """
 function _gcp end
 
+# Specific Algorithms
+
 include("gcp-algorithms/lbfgsb.jl")
 include("gcp-algorithms/als.jl")
 include("gcp-algorithms/fastals.jl")
 
-# Objective function and gradients
+# Objective function
 
 """
     objective(M::CPD, X::AbstractArray, loss)
@@ -51,6 +53,8 @@ and loss function `loss`.
 function objective(M::CPD{T,N}, X::Array{TX,N}, loss) where {T,TX,N}
     return sum(value(loss, X[I], M[I]) for I in CartesianIndices(X) if !ismissing(X[I]))
 end
+
+# Gradient function
 
 """
     grad_U!(GU, M::CPD, X::AbstractArray, loss)
