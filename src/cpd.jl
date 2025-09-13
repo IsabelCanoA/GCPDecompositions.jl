@@ -103,6 +103,21 @@ function norm2(M::CPD{T,N}) where {T,N}
 end
 
 """
+    permutedims(M::CPD, perm)
+
+Permute the dimensions (axes) of `M`.
+`perm` is a vector or a tuple of length `ndims(M)` specifying the permutation.
+
+The permuted `CPD` object returned by this function is formed without copying
+(the output shares storage with the input `M`).
+"""
+function permutedims(M::CPD, perm)
+    (length(perm) == ndims(M) && isperm(perm)) ||
+        throw(ArgumentError("no valid permutation of dimensions"))
+    return CPD(M.λ, ntuple(k -> M.U[perm[k]], ndims(M)))
+end
+
+"""
     normalizecomps(M::CPD, p::Real = 2)
 
 Normalize the components of `M` so that the columns of all its factor matrices

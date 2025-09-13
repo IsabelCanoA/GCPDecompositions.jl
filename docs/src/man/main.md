@@ -8,6 +8,7 @@
 GCPDecompositions
 gcp
 CPD
+permutedims
 ncomps
 normalizecomps
 normalizecomps!

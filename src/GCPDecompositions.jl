@@ -6,6 +6,7 @@ module GCPDecompositions
 # Imports
 import Base: ndims, size, show, summary
 import Base: getindex
+import Base: permutedims
 import Base: AbstractArray, Array
 import LinearAlgebra: norm
 using Base.Order: Ordering, Reverse
