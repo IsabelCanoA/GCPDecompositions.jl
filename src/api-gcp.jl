@@ -1,4 +1,4 @@
-## API: GCP
+## Main GCP functions
 
 # Main fitting function
 
