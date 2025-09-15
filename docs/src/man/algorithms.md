@@ -7,8 +7,8 @@
 ```@docs
 GCPAlgorithms
 GCPAlgorithms.AbstractAlgorithm
-GCPAlgorithms.objective
-GCPAlgorithms.grad_U!
+GCPAlgorithms.gcp_objective
+GCPAlgorithms.gcp_grad_U!
 ```
 
 ```@autodocs

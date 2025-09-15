@@ -70,12 +70,12 @@ function _gcp(
     vec_ranges = ntuple(k -> vec_cutoffs[k]+1:vec_cutoffs[k+1], Val(N))
     function f(u)
         U = map(range -> reshape(view(u, range), :, r), vec_ranges)
-        return objective(CPD(ones(T, r), U), X, loss)
+        return gcp_objective(CPD(ones(T, r), U), X, loss)
     end
     function g!(gu, u)
         U = map(range -> reshape(view(u, range), :, r), vec_ranges)
         GU = map(range -> reshape(view(gu, range), :, r), vec_ranges)
-        grad_U!(GU, CPD(ones(T, r), U), X, loss)
+        gcp_grad_U!(GU, CPD(ones(T, r), U), X, loss)
         return gu
     end
 

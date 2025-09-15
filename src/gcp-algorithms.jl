@@ -45,25 +45,25 @@ include("gcp-algorithms/fastals.jl")
 # Objective function
 
 """
-    objective(M::CPD, X::AbstractArray, loss)
+    gcp_objective(M::CPD, X::AbstractArray, loss)
 
 Compute the GCP objective function for the model tensor `M`, data tensor `X`,
 and loss function `loss`.
 """
-function objective(M::CPD{T,N}, X::Array{TX,N}, loss) where {T,TX,N}
+function gcp_objective(M::CPD{T,N}, X::Array{TX,N}, loss) where {T,TX,N}
     return sum(value(loss, X[I], M[I]) for I in CartesianIndices(X) if !ismissing(X[I]))
 end
 
 # Gradient function
 
 """
-    grad_U!(GU, M::CPD, X::AbstractArray, loss)
+    gcp_grad_U!(GU, M::CPD, X::AbstractArray, loss)
 
 Compute the GCP gradient with respect to the factor matrices `U = (U[1],...,U[N])`
 for the model tensor `M`, data tensor `X`, and loss function `loss`, and store
 the result in `GU = (GU[1],...,GU[N])`.
 """
-function grad_U!(
+function gcp_grad_U!(
     GU::NTuple{N,TGU},
     M::CPD{T,N},
     X::Array{TX,N},
