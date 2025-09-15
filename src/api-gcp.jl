@@ -3,43 +3,78 @@
 # Main fitting function
 
 """
-    gcp(X::Array, r;
+    gcp(X, r;
         loss = GCPLosses.LeastSquares(),
         constraints = default_gcp_constraints(X, r, loss),
         algorithm = default_gcp_algorithm(X, r, loss, constraints),
         init = default_gcp_init(X, r, loss, constraints, algorithm))
 
-Compute an approximate rank-`r` CP decomposition of the tensor `X`
+Compute an approximate rank-`r` CP decomposition of the data tensor `X`
 with respect to the loss function `loss` and return a `CPD` object.
 
 Keyword arguments:
++ `loss`        : loss function to use
 + `constraints` : a `Tuple` of constraints on the factor matrices `U = (U[1],...,U[N])`.
-+ `algorithm`   : algorithm to use
++ `algorithm    : algorithm to use
 
 Conventional CP corresponds to the default `GCPLosses.LeastSquares()` loss
 with the default of no constraints (i.e., `constraints = ()`).
 
 If the LossFunctions.jl package is also loaded,
-`loss` can also be a loss function from that package.
-Check `GCPDecompositions.LossFunctionsExt.SupportedLosses`
-to see what losses are supported.
+`loss` can also be a `DistanceLoss` or `MarginLoss` from that package;
+`gcp` will automatically wrap it into a `GCPLosses.Wrapped` loss.
 
 See also: `CPD`, `GCPLosses`, `GCPConstraints`, `GCPAlgorithms`.
 """
-gcp(
-    X::Array,
+function gcp(
+    X,
     r;
     loss = GCPLosses.LeastSquares(),
     constraints = default_gcp_constraints(X, r, loss),
     algorithm = default_gcp_algorithm(X, r, loss, constraints),
     init = default_gcp_init(X, r, loss, constraints, algorithm),
-) = GCPAlgorithms._gcp!(
-    deepcopy(init),
-    X,
-    convert(GCPLosses.AbstractLoss, loss),
-    constraints,
-    algorithm,
 )
+    # Normalize loss
+    if !isa(loss, GCPLosses.AbstractLoss)
+        @warn "converting provided loss `$loss` into a `GCPLosses.AbstractLoss`"
+        loss = convert(GCPLosses.AbstractLoss, loss)
+    end
+
+    # Normalize constraints
+    if !isa(constraints, Tuple{Vararg{GCPConstraints.AbstractConstraint}})
+        if isa(constraints, GCPConstraints.AbstractConstraint)
+            @warn "wrapping single provided constraint in a tuple"
+            constraints = tuple(constraints)
+        else
+            @warn "converting provided constraints `$constraints` into a tuple of `GCPLosses.AbstractConstraint`s"
+            constraints = Tuple(constraints)
+        end
+    end
+
+    # Check and copy init
+    size(init) == size(X) || throw(ArgumentError("`init` must have the same size as `X`"))
+    ncomps(init) == r || throw(ArgumentError("`init` must have `r` components"))
+    M = deepcopy(init)
+
+    # Check if algorithm supports those inputs
+    if !applicable(GCPAlgorithms._gcp!, M, X, loss, constraints, algorithm)
+        error_str = """
+        Algorithm $(Base.nameof(typeof(algorithm))) does not currently support the provided types:
+        + the provided `X` was of type `$(typeof(X))`
+        + the provided `loss` was of type `$(typeof(loss))`
+        + the provided `constraints` was of type `$(typeof(constraints))`
+        + the provided `init` was of type `$(typeof(init))`
+        Please get in touch and let us know if you think it should - we are adding more methods over time!
+
+        Currently implemented methods for $(Base.nameof(typeof(algorithm))) are:
+        $(methods(GCPAlgorithms._gcp!, (Any, Any, Any, Any, typeof(algorithm))))
+        """
+        throw(ErrorException(error_str))
+    end
+
+    # Call internal function with normalized inputs
+    return GCPAlgorithms._gcp!(M, X, loss, constraints, algorithm)
+end
 
 # Default constraints
 
