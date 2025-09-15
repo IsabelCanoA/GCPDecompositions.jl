@@ -347,5 +347,8 @@ struct Wrapped{T} <: AbstractLoss
     loss::T
     source::Module
 end
+value(loss::Wrapped, x, m) = value(loss.loss, x, m)
+deriv(loss::Wrapped, x, m) = deriv(loss.loss, x, m)
+domain(loss::Wrapped) = domain(loss.loss)
 
 end

@@ -8,8 +8,8 @@ const SupportedLosses = Union{LossFunctions.DistanceLoss,LossFunctions.MarginLos
 Base.convert(::Type{GCPLosses.AbstractLoss}, loss::SupportedLosses) =
     GCPLosses.Wrapped(loss, LossFunctions)
 
-GCPLosses.value(loss::GCPLosses.Wrapped{<:SupportedLosses}, x, m) = loss.loss(m, x)
-GCPLosses.deriv(loss::GCPLosses.Wrapped{<:SupportedLosses}, x, m) = LossFunctions.deriv(loss.loss, m, x)
-GCPLosses.domain(::GCPLosses.Wrapped{<:SupportedLosses})          = Interval(-Inf, Inf)
+GCPLosses.value(loss::SupportedLosses, x, m) = loss(m, x)
+GCPLosses.deriv(loss::SupportedLosses, x, m) = LossFunctions.deriv(loss, m, x)
+GCPLosses.domain(::SupportedLosses)          = Interval(-Inf, Inf)
 
 end
