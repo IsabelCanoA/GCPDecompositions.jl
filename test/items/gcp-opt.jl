@@ -9,7 +9,7 @@
     M = CPD(ones(r), rand.(sz, r))
     X = [M[I] for I in CartesianIndices(size(M))]
 
-    # Exercise `default_constraints`
+    # Exercise `default_gcp_constraints`
     @test_throws ErrorException gcp(
         X,
         r;
