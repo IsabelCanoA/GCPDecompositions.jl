@@ -5,7 +5,7 @@
 """
     gcp(X::Array, r;
         loss = GCPLosses.LeastSquares(),
-        constraints = default_gcp_constraints(loss),
+        constraints = default_gcp_constraints(X, r, loss),
         algorithm = default_gcp_algorithm(X, r, loss, constraints),
         init = default_gcp_init(X, r, loss, constraints, algorithm))
 
@@ -30,7 +30,7 @@ gcp(
     X::Array,
     r;
     loss = GCPLosses.LeastSquares(),
-    constraints = default_gcp_constraints(loss),
+    constraints = default_gcp_constraints(X, r, loss),
     algorithm = default_gcp_algorithm(X, r, loss, constraints),
     init = default_gcp_init(X, r, loss, constraints, algorithm),
 ) = GCPAlgorithms._gcp(X, r, loss, constraints, algorithm, init)
@@ -38,13 +38,14 @@ gcp(
 # Default constraints
 
 """
-    default_gcp_constraints(loss)
+    default_gcp_constraints(X, r, loss)
 
-Return a default tuple of constraints for the loss function `loss`.
+Return a default tuple of constraints for the data tensor `X`,
+rank `r`, and loss function `loss`.
 
 See also: `gcp`.
 """
-function default_gcp_constraints(loss)
+function default_gcp_constraints(X, r, loss)
     dom = GCPLosses.domain(loss)
     if dom == Interval(-Inf, +Inf)
         return ()
