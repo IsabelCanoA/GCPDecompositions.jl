@@ -195,7 +195,8 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
         # First chunk
         prechunk = div(entrylines - 1, 2, RoundUp)
         perm =
-            indsorted ? (1:prechunk+1) : partialsortperm(inds, 1:prechunk+1; by = reverse)
+            indsorted ? (1:(prechunk+1)) :
+            partialsortperm(inds, 1:(prechunk+1); by = reverse)
         sinds, svals = view(inds, perm), view(vals, perm)
         for ptr in 1:prechunk
             if ptr == 1 || sinds[ptr] != sinds[ptr-1]
@@ -212,10 +213,10 @@ function show(io::IO, ::MIME"text/plain", A::SparseArrayCOO)
         # Second chunk
         postchunk = div(entrylines - 1, 2, RoundDown)
         perm =
-            indsorted ? (nstored-postchunk:nstored) :
-            partialsortperm(inds, nstored-postchunk:nstored; by = reverse)
+            indsorted ? ((nstored-postchunk):nstored) :
+            partialsortperm(inds, (nstored-postchunk):nstored; by = reverse)
         sinds, svals = view(inds, perm), view(vals, perm)
-        for ptr in 2:postchunk+1
+        for ptr in 2:(postchunk+1)
             if sinds[ptr] != sinds[ptr-1]
                 _print_ln_entry(io, pad, sinds[ptr], svals[ptr])
             elseif ptr == 2

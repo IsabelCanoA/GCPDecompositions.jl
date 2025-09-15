@@ -67,7 +67,7 @@ function _gcp(
 
     # Setup vectorized objective function and gradient
     vec_cutoffs = (0, cumsum(r .* size(X))...)
-    vec_ranges = ntuple(k -> vec_cutoffs[k]+1:vec_cutoffs[k+1], Val(N))
+    vec_ranges = ntuple(k -> (vec_cutoffs[k]+1):vec_cutoffs[k+1], Val(N))
     function f(u)
         U = map(range -> reshape(view(u, range), :, r), vec_ranges)
         return gcp_objective(CPD(ones(T, r), U), X, loss)

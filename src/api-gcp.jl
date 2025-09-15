@@ -68,8 +68,12 @@ loss function `loss`, and tuple of constraints `constraints`.
 
 See also: `gcp`.
 """
-default_gcp_algorithm(X::Array{<:Real}, r, loss::GCPLosses.LeastSquares, constraints::Tuple{}) =
-    GCPAlgorithms.FastALS()
+default_gcp_algorithm(
+    X::Array{<:Real},
+    r,
+    loss::GCPLosses.LeastSquares,
+    constraints::Tuple{},
+) = GCPAlgorithms.FastALS()
 default_gcp_algorithm(X, r, loss, constraints) = GCPAlgorithms.LBFGSB()
 
 # Default initialization
