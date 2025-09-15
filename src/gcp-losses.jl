@@ -336,4 +336,16 @@ value(loss::UserDefined, x, m) = loss.func(x, m)
 deriv(loss::UserDefined, x, m) = loss.deriv(x, m)
 domain(loss::UserDefined) = loss.domain
 
+# Loss coming from another package
+
+"""
+    Wrapped
+
+Wrapper type for loss functions coming from other packages.
+"""
+struct Wrapped{T} <: AbstractLoss
+    loss::T
+    source::Module
+end
+
 end

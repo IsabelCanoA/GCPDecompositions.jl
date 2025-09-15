@@ -33,7 +33,13 @@ gcp(
     constraints = default_gcp_constraints(X, r, loss),
     algorithm = default_gcp_algorithm(X, r, loss, constraints),
     init = default_gcp_init(X, r, loss, constraints, algorithm),
-) = GCPAlgorithms._gcp!(deepcopy(init), X, loss, constraints, algorithm)
+) = GCPAlgorithms._gcp!(
+    deepcopy(init),
+    X,
+    convert(GCPLosses.AbstractLoss, loss),
+    constraints,
+    algorithm,
+)
 
 # Default constraints
 
@@ -45,7 +51,9 @@ rank `r`, and loss function `loss`.
 
 See also: `gcp`.
 """
-function default_gcp_constraints(X, r, loss)
+default_gcp_constraints(X, r, loss) =
+    default_gcp_constraints(X, r, convert(GCPLosses.AbstractLoss, loss))
+function default_gcp_constraints(X, r, loss::GCPLosses.AbstractLoss)
     dom = GCPLosses.domain(loss)
     if dom == Interval(-Inf, +Inf)
         return ()
@@ -68,13 +76,16 @@ loss function `loss`, and tuple of constraints `constraints`.
 
 See also: `gcp`.
 """
+default_gcp_algorithm(X, r, loss, constraints) =
+    default_gcp_algorithm(X, r, convert(GCPLosses.AbstractLoss, loss), constraints)
 default_gcp_algorithm(
     X::Array{<:Real},
     r,
     loss::GCPLosses.LeastSquares,
     constraints::Tuple{},
 ) = GCPAlgorithms.FastALS()
-default_gcp_algorithm(X, r, loss, constraints) = GCPAlgorithms.LBFGSB()
+default_gcp_algorithm(X, r, loss::GCPLosses.AbstractLoss, constraints) =
+    GCPAlgorithms.LBFGSB()
 
 # Default initialization
 
@@ -89,7 +100,15 @@ See also: `gcp`.
 """
 default_gcp_init(X, r, loss, constraints, algorithm) =
     default_gcp_init(default_rng(), X, r, loss, constraints, algorithm)
-function default_gcp_init(rng, X, r, loss, constraints, algorithm)
+default_gcp_init(rng, X, r, loss, constraints, algorithm) = default_gcp_init(
+    rng,
+    X,
+    r,
+    convert(GCPLosses.AbstractLoss, loss),
+    constraints,
+    algorithm,
+)
+function default_gcp_init(rng, X, r, loss::GCPLosses.AbstractLoss, constraints, algorithm)
     # Generate CPD with random factors
     T, N = nonmissingtype(eltype(X)), ndims(X)
     T = promote_type(T, Float64)
