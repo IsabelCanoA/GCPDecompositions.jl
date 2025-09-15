@@ -15,12 +15,12 @@ Base.@kwdef struct ALS <: AbstractAlgorithm
 end
 
 function _gcp!(
-    M,
-    X::Array{TX,N},
+    M::CPD{T,N},
+    X::Array{T,N},
     loss::GCPLosses.LeastSquares,
     constraints::Tuple{},
     algorithm::GCPAlgorithms.ALS,
-) where {TX<:Real,N}
+) where {T<:Real,N}
     # Pre-allocate MTTKRP buffers
     mttkrp_buffers = ntuple(n -> create_mttkrp_buffer(X, M.U, n), N)
 

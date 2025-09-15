@@ -20,6 +20,9 @@ Brief description of algorithm parameters:
       + `iprint = 100` also prints the changes of active set and final `x`
       + `iprint > 100` prints details of every iteration including `x` and `g`
 
+Notes:
++ this algorithm only supports `Float64` numbers
+
 See documentation of [LBFGSB.jl](https://github.com/Gnimuc/LBFGSB.jl) for more details.
 """
 Base.@kwdef struct LBFGSB <: AbstractAlgorithm
@@ -32,14 +35,13 @@ Base.@kwdef struct LBFGSB <: AbstractAlgorithm
 end
 
 function _gcp!(
-    M,
-    X::Array{TX,N},
-    loss,
+    M::CPD{Float64,N},
+    X::Array{<:Union{Float64,Missing},N},
+    loss::GCPLosses.AbstractLoss,
     constraints::Tuple{Vararg{GCPConstraints.LowerBound}},
     algorithm::GCPAlgorithms.LBFGSB,
-) where {TX,N}
+) where {N}
     r = ncomps(M)
-    # T = promote_type(nonmissingtype(TX), Float64)
     T = Float64    # LBFGSB.jl seems to only support Float64
 
     # Compute lower bound from constraints
