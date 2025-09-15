@@ -33,7 +33,7 @@ gcp(
     constraints = default_gcp_constraints(X, r, loss),
     algorithm = default_gcp_algorithm(X, r, loss, constraints),
     init = default_gcp_init(X, r, loss, constraints, algorithm),
-) = GCPAlgorithms._gcp(X, r, loss, constraints, algorithm, init)
+) = GCPAlgorithms._gcp!(deepcopy(init), X, loss, constraints, algorithm)
 
 # Default constraints
 

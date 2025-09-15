@@ -21,20 +21,20 @@ using LBFGSB: lbfgsb
 Abstract type for GCP algorithms.
 
 Concrete types `ConcreteAlgorithm <: AbstractAlgorithm` should implement
-`_gcp(X, r, loss, constraints, algorithm::ConcreteAlgorithm)`
-that returns a `CPD`.
+`_gcp!(M, X, loss, constraints, algorithm::ConcreteAlgorithm)`
+that modifies the initialization `M` and returns the modified version.
 """
 abstract type AbstractAlgorithm end
 
 """
-    _gcp(X, r, loss, constraints, algorithm)
+    _gcp!(M, X, loss, constraints, algorithm)
 
 Internal function to compute an approximate rank-`r` CP decomposition
-of the tensor `X` with respect to the loss function `loss` and the
-constraints `constraints` using the algorithm `algorithm`, returning
-a `CPD` object.
+of the data tensor `X` with respect to the loss function `loss` and the
+constraints `constraints` using the algorithm `algorithm`, modifying the
+initialization `M` and returning the modified version.
 """
-function _gcp end
+function _gcp! end
 
 # Built-in algorithms
 

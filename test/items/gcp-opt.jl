@@ -16,7 +16,7 @@
         loss = GCPLosses.UserDefined((x, m) -> (x - m)^2; domain = Interval(1, Inf)),
     )
 
-    # Exercise `_gcp`
+    # Exercise `_gcp!`
     @test_throws ErrorException gcp(
         X,
         r;

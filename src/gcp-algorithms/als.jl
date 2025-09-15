@@ -14,17 +14,13 @@ Base.@kwdef struct ALS <: AbstractAlgorithm
     maxiters::Int = 200
 end
 
-function _gcp(
+function _gcp!(
+    M,
     X::Array{TX,N},
-    r,
     loss::GCPLosses.LeastSquares,
     constraints::Tuple{},
     algorithm::GCPAlgorithms.ALS,
-    init,
 ) where {TX<:Real,N}
-    # Initialization
-    M = deepcopy(init)
-
     # Pre-allocate MTTKRP buffers
     mttkrp_buffers = ntuple(n -> create_mttkrp_buffer(X, M.U, n), N)
 

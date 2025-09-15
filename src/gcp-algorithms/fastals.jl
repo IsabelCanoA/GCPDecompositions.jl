@@ -21,17 +21,13 @@ Base.@kwdef struct FastALS <: AbstractAlgorithm
     maxiters::Int = 200
 end
 
-function _gcp(
+function _gcp!(
+    M,
     X::Array{TX,N},
-    r,
     loss::GCPLosses.LeastSquares,
     constraints::Tuple{},
     algorithm::GCPAlgorithms.FastALS,
-    init,
 ) where {TX<:Real,N}
-    # Initialization
-    M = deepcopy(init)
-
     # Determine order of modes of MTTKRP to compute
     Jns = [prod(size(X)[1:n]) for n in 1:N]
     Kns = [prod(size(X)[(n+1):end]) for n in 1:N]

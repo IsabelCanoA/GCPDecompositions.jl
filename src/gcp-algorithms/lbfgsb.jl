@@ -31,14 +31,14 @@ Base.@kwdef struct LBFGSB <: AbstractAlgorithm
     iprint::Int    = -1
 end
 
-function _gcp(
+function _gcp!(
+    M,
     X::Array{TX,N},
-    r,
     loss,
     constraints::Tuple{Vararg{GCPConstraints.LowerBound}},
     algorithm::GCPAlgorithms.LBFGSB,
-    init,
 ) where {TX,N}
+    r = ncomps(M)
     # T = promote_type(nonmissingtype(TX), Float64)
     T = Float64    # LBFGSB.jl seems to only support Float64
 
@@ -62,7 +62,7 @@ function _gcp(
     end
 
     # Initialization
-    U0 = normalizecomps(init; dims = :λ, distribute_to = 1:ndims(init)).U
+    U0 = normalizecomps!(M; dims = :λ, distribute_to = 1:ndims(M)).U
     u0 = vcat(vec.(U0)...)
 
     # Setup vectorized objective function and gradient
@@ -82,6 +82,8 @@ function _gcp(
     # Run LBFGSB
     lbfgsopts = (; (pn => getproperty(algorithm, pn) for pn in propertynames(algorithm))...)
     u = lbfgsb(f, g!, u0; lb = fill(lower, length(u0)), lbfgsopts...)[2]
-    U = map(range -> reshape(u[range], :, r), vec_ranges)
-    return CPD(ones(T, r), U)
+    for k in 1:N
+        M.U[k] .= reshape(u[vec_ranges[k]], :, r)
+    end
+    return M
 end
