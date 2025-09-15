@@ -14,7 +14,7 @@ Efficient ALS algorithm proposed in:
 
 Algorithm parameters:
 
-- `maxiters::Int` : max number of iterations (default: `200`)
++ `maxiters::Int` : max number of iterations (default: `200`)
 
 """
 Base.@kwdef struct FastALS <: AbstractAlgorithm
@@ -46,10 +46,10 @@ end
 
 """
     FastALS_iter!(X, U, λ) 
-    
-    Algorithm for computing MTTKRP sequences is from "Fast Alternating LS Algorithms
-    for High Order CANDECOMP/PARAFAC Tensor Factorizations" by Phan et al., specifically
-    section III-C.
+
+Algorithm for computing MTTKRP sequences is from "Fast Alternating LS Algorithms
+for High Order CANDECOMP/PARAFAC Tensor Factorizations" by Phan et al., specifically
+section III-C.
 """
 function FastALS_iter!(X, M, order, Jns, Kns, buffers)
     N = ndims(X)
