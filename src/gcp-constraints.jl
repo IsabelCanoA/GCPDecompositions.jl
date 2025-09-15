@@ -1,4 +1,4 @@
-## Constraint types
+## GCP Constraints
 
 """
 Constraints for Generalized CP Decomposition.
@@ -14,7 +14,7 @@ Abstract type for GCP constraints on the factor matrices `U = (U[1],...,U[N])`.
 """
 abstract type AbstractConstraint end
 
-# Concrete types
+# Built-in constraints
 
 """
     LowerBound(value::Real)

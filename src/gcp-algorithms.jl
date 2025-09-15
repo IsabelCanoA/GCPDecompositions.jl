@@ -1,4 +1,4 @@
-## Algorithm types
+## GCP Algorithms
 
 """
 Algorithms for Generalized CP Decomposition.
@@ -13,7 +13,7 @@ using IntervalSets: Interval
 using LinearAlgebra: lu!, mul!, norm, rdiv!, rmul!, Diagonal
 using LBFGSB: lbfgsb
 
-# Abstract Algorithm Interface
+# Abstract type and associated functions
 
 """
     AbstractAlgorithm
@@ -36,7 +36,7 @@ a `CPD` object.
 """
 function _gcp end
 
-# Specific Algorithms
+# Built-in algorithms
 
 include("gcp-algorithms/lbfgsb.jl")
 include("gcp-algorithms/als.jl")

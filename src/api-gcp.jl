@@ -35,7 +35,7 @@ gcp(
     init = default_init(X, r, loss, constraints, algorithm),
 ) = GCPAlgorithms._gcp(X, r, loss, constraints, algorithm, init)
 
-# Defaults constraints
+# Default constraints
 
 """
     default_constraints(loss)
@@ -57,7 +57,7 @@ function default_constraints(loss)
     end
 end
 
-# Defaults algorithms
+# Default algorithm
 
 """
     default_algorithm(X, r, loss, constraints)
@@ -71,7 +71,7 @@ default_algorithm(X::Array{<:Real}, r, loss::GCPLosses.LeastSquares, constraints
     GCPAlgorithms.FastALS()
 default_algorithm(X, r, loss, constraints) = GCPAlgorithms.LBFGSB()
 
-# Defaults initializations
+# Default initialization
 
 """
     default_init([rng=default_rng()], X, r, loss, constraints, algorithm)

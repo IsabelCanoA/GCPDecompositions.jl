@@ -1,4 +1,4 @@
-## Loss function types
+## GCP Losses
 
 """
 Loss functions for Generalized CP Decomposition.
@@ -8,7 +8,7 @@ module GCPLosses
 using IntervalSets: Interval
 import ForwardDiff
 
-# Abstract type
+# Abstract type and associated functions
 
 """
     AbstractLoss
@@ -47,7 +47,7 @@ Return the domain of the (entrywise) loss function `loss`.
 """
 function domain end
 
-# Statistically motivated losses
+# Built-in losses
 
 """
     LeastSquares()
@@ -297,6 +297,7 @@ end
 domain(::BetaDivergence) = Interval(0.0, +Inf)
 
 # User-defined loss
+
 """
     UserDefined
 
