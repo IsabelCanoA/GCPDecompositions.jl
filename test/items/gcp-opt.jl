@@ -30,6 +30,14 @@
         loss = GCPLosses.UserDefined((x, m) -> (x - m)^2; domain = Interval(1, Inf)),
         constraints = (GCPConstraints.LowerBound(1),),
     )
+
+    # Exercise check in `gcp` for supported inputs to algorithm
+    @test_throws ErrorException gcp(
+        X,
+        r;
+        constraints = (GCPConstraints.LowerBound(0),),
+        algorithm = GCPAlgorithms.ALS(),
+    )
 end
 
 @testitem "LeastSquares" begin
