@@ -36,7 +36,7 @@ end
 
 function _gcp!(
     M::CPD{Float64,N},
-    X::Array{<:Union{Float64,Missing},N},
+    X::Array{<:Union{Real,Missing},N},
     loss::GCPLosses.AbstractLoss,
     constraints::Tuple{Vararg{GCPConstraints.LowerBound}},
     algorithm::GCPAlgorithms.LBFGSB,

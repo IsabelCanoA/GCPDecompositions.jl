@@ -22,12 +22,12 @@ Base.@kwdef struct FastALS <: AbstractAlgorithm
 end
 
 function _gcp!(
-    M::CPD{T,N},
-    X::Array{T,N},
+    M::CPD{Float64,N},
+    X::Array{<:Real,N},
     loss::GCPLosses.LeastSquares,
     constraints::Tuple{},
     algorithm::GCPAlgorithms.FastALS,
-) where {T<:Real,N}
+) where {N}
     # Determine order of modes of MTTKRP to compute
     Jns = [prod(size(X)[1:n]) for n in 1:N]
     Kns = [prod(size(X)[(n+1):end]) for n in 1:N]
