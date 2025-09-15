@@ -1,6 +1,6 @@
 ## GCP decomposition - full optimization
 
-@testitem "unsupported constraints" begin
+@testitem "unsupported inputs" begin
     using Random, IntervalSets
 
     sz = (15, 20, 25)
