@@ -22,7 +22,7 @@ export SparseArrayCOO
 export CPD
 export ncomps,
     normalizecomps, normalizecomps!, permutecomps, permutecomps!, sortcomps, sortcomps!
-export gcp
+export gcp, default_gcp_constraints, default_gcp_algorithm, default_gcp_init
 export GCPLosses, GCPConstraints, GCPAlgorithms
 
 include("tensor-kernels.jl")
