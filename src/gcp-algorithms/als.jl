@@ -1,4 +1,4 @@
-## Algorithm: LBFGSB
+## Algorithm: ALS
 
 """
     ALS
