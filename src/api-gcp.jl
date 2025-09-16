@@ -13,9 +13,9 @@ Compute an approximate rank-`r` CP decomposition of the data tensor `X`
 with respect to the loss function `loss` and return a `CPD` object.
 
 Keyword arguments:
-+ `loss`        : loss function to use
-+ `constraints` : a `Tuple` of constraints on the factor matrices `U = (U[1],...,U[N])`.
-+ `algorithm    : algorithm to use
++ `loss`        : loss function of type `GCPLosses.AbstractLoss`
++ `constraints` : a `Tuple` of constraints of type `GCPConstraints.AbstractConstraint`
++ `algorithm`   : algorithm of type `GCPAlgorithms.AbstractAlgorithm`
 
 Conventional CP corresponds to the default `GCPLosses.LeastSquares()` loss
 with the default of no constraints (i.e., `constraints = ()`).
