@@ -18,6 +18,4 @@ Filter = t -> t in subtypes(GCPLosses.AbstractLoss)
 GCPLosses.value
 GCPLosses.deriv
 GCPLosses.domain
-GCPLosses.objective
-GCPLosses.grad_U!
 ```

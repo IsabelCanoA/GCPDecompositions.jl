@@ -16,7 +16,7 @@ permutecomps
 permutecomps!
 sortcomps
 sortcomps!
-GCPDecompositions.default_constraints
-GCPDecompositions.default_algorithm
-GCPDecompositions.default_init
+GCPDecompositions.default_gcp_constraints
+GCPDecompositions.default_gcp_algorithm
+GCPDecompositions.default_gcp_init
 ```

@@ -59,15 +59,15 @@ function mttkrp!(
     #   + prod(I[1:n]) > prod(I[n:N]): better to multiply left-to-right
     #   + prod(I[1:n]) < prod(I[n:N]): better to multiply right-to-left
     if n == 1
-        kr_right = n + 1 == N ? U[N] : khatrirao!(buffer.kr_right, U[reverse(n+1:N)]...)
+        kr_right = n + 1 == N ? U[N] : khatrirao!(buffer.kr_right, U[reverse((n+1):N)]...)
         mul!(G, reshape(X, I[1], :), kr_right)
     elseif n == N
-        kr_left = n == 2 ? U[1] : khatrirao!(buffer.kr_left, U[reverse(1:n-1)]...)
+        kr_left = n == 2 ? U[1] : khatrirao!(buffer.kr_left, U[reverse(1:(n-1))]...)
         mul!(G, transpose(reshape(X, :, I[N])), kr_left)
     else
         # Compute left and right Khatri-Rao products
-        kr_left = n == 2 ? U[1] : khatrirao!(buffer.kr_left, U[reverse(1:n-1)]...)
-        kr_right = n + 1 == N ? U[N] : khatrirao!(buffer.kr_right, U[reverse(n+1:N)]...)
+        kr_left = n == 2 ? U[1] : khatrirao!(buffer.kr_left, U[reverse(1:(n-1))]...)
+        kr_right = n + 1 == N ? U[N] : khatrirao!(buffer.kr_right, U[reverse((n+1):N)]...)
 
         if prod(I[1:n]) > prod(I[n:N])
             # Inner multiplication: left side
@@ -124,8 +124,8 @@ function create_mttkrp_buffer(
 
     # Allocate buffers
     return (;
-        kr_left = n in 1:2 ? nothing : similar(U[1], prod(I[1:n-1]), r),
-        kr_right = n in N-1:N ? nothing : similar(U[n+1], prod(I[n+1:N]), r),
+        kr_left = n in 1:2 ? nothing : similar(U[1], prod(I[1:(n-1)]), r),
+        kr_right = n in (N-1):N ? nothing : similar(U[n+1], prod(I[(n+1):N]), r),
         inner = n in [1, N] ? nothing :
                 prod(I[1:n]) > prod(I[n:N]) ? similar(U[n], I[n:N]..., r) :
                 similar(U[n], I[1:n]..., r),

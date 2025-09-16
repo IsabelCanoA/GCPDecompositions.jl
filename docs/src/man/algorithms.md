@@ -7,9 +7,11 @@
 ```@docs
 GCPAlgorithms
 GCPAlgorithms.AbstractAlgorithm
+GCPAlgorithms.gcp_objective
+GCPAlgorithms.gcp_grad_U!
 ```
 
 ```@autodocs
 Modules = [GCPAlgorithms]
-Filter = t -> t in subtypes(GCPAlgorithms.AbstractAlgorithm) || (t isa Function && t != GCPAlgorithms._gcp)
+Filter = t -> t in subtypes(GCPAlgorithms.AbstractAlgorithm) || (t isa Function && t != GCPAlgorithms._gcp!)
 ```

@@ -1,6 +1,6 @@
 ## GCP decomposition - full optimization
 
-@testitem "unsupported constraints" begin
+@testitem "unsupported inputs" begin
     using Random, IntervalSets
 
     sz = (15, 20, 25)
@@ -9,14 +9,14 @@
     M = CPD(ones(r), rand.(sz, r))
     X = [M[I] for I in CartesianIndices(size(M))]
 
-    # Exercise `default_constraints`
+    # Exercise `default_gcp_constraints`
     @test_throws ErrorException gcp(
         X,
         r;
         loss = GCPLosses.UserDefined((x, m) -> (x - m)^2; domain = Interval(1, Inf)),
     )
 
-    # Exercise `_gcp`
+    # Exercise `_gcp!`
     @test_throws ErrorException gcp(
         X,
         r;
@@ -29,6 +29,14 @@
         r;
         loss = GCPLosses.UserDefined((x, m) -> (x - m)^2; domain = Interval(1, Inf)),
         constraints = (GCPConstraints.LowerBound(1),),
+    )
+
+    # Exercise check in `gcp` for supported inputs to algorithm
+    @test_throws ErrorException gcp(
+        X,
+        r;
+        constraints = (GCPConstraints.LowerBound(0),),
+        algorithm = GCPAlgorithms.ALS(),
     )
 end
 

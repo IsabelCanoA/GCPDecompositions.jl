@@ -1,4 +1,4 @@
-## Algorithm: LBFGSB
+## Algorithm: ALS
 
 """
     ALS
@@ -8,23 +8,19 @@ Workhorse algorithm for `LeastSquares` loss with no constraints.
 
 Algorithm parameters:
 
-- `maxiters::Int` : max number of iterations (default: `200`)
++ `maxiters::Int` : max number of iterations (default: `200`)
 """
 Base.@kwdef struct ALS <: AbstractAlgorithm
     maxiters::Int = 200
 end
 
-function _gcp(
-    X::Array{TX,N},
-    r,
+function _gcp!(
+    M::CPD{Float64,N},
+    X::Array{<:Real,N},
     loss::GCPLosses.LeastSquares,
     constraints::Tuple{},
     algorithm::GCPAlgorithms.ALS,
-    init,
-) where {TX<:Real,N}
-    # Initialization
-    M = deepcopy(init)
-
+) where {N}
     # Pre-allocate MTTKRP buffers
     mttkrp_buffers = ntuple(n -> create_mttkrp_buffer(X, M.U, n), N)
 

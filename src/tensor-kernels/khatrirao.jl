@@ -34,8 +34,8 @@ function khatrirao!(K::AbstractMatrix, A::Vararg{AbstractMatrix,N}) where {N}
     elseif N == 2    # base case: N = 2
         reshape(K, I[2], I[1], r) .= reshape(A[2], :, 1, r) .* reshape(A[1], 1, :, r)
     else             # recursion: N > 2
-        n = argmin(n -> I[n] * I[n+1], 1:N-1)
-        khatrirao!(K, A[1:n-1]..., khatrirao(A[n], A[n+1]), A[n+2:end]...)
+        n = argmin(n -> I[n] * I[n+1], 1:(N-1))
+        khatrirao!(K, A[1:(n-1)]..., khatrirao(A[n], A[n+1]), A[(n+2):end]...)
     end
 
     return K

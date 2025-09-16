@@ -7,6 +7,8 @@
 ```@docs
 GCPConstraints
 GCPConstraints.AbstractConstraint
+GCPConstraints.satisfies
+GCPConstraints.project!
 ```
 
 ```@autodocs
