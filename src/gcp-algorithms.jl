@@ -7,6 +7,7 @@ module GCPAlgorithms
 
 using ..GCPDecompositions
 using ..GCPLosses: value, deriv, domain
+using ..GCPConstraints: project!
 using ..TensorKernels: create_mttkrp_buffer, mttkrp!, mttkrps!
 using ..TensorKernels: khatrirao!, khatrirao
 using IntervalSets: Interval

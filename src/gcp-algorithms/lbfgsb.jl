@@ -64,7 +64,11 @@ function _gcp!(
     end
 
     # Initialization
-    U0 = normalizecomps!(M; dims = :λ, distribute_to = 1:ndims(M)).U
+    normalizecomps!(M; dims = :λ, distribute_to = 1:ndims(M))
+    M.U[1] .*= permutedims(sign.(M.λ))
+    M.λ .= oneunit(T)
+    project!(M, GCPConstraints.LowerBound(lower))
+    U0 = M.U
     u0 = vcat(vec.(U0)...)
 
     # Setup vectorized objective function and gradient
