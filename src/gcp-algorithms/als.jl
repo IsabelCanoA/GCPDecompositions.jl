@@ -15,14 +15,15 @@ Base.@kwdef struct ALS <: AbstractAlgorithm
 end
 
 function _gcp!(
-    M::CPD{Float64,N},
+        M::CPD{Float64,N},
     X::Array{<:Real,N},
     loss::GCPLosses.LeastSquares,
     constraints::Tuple{},
     algorithm::GCPAlgorithms.ALS,
 ) where {N}
     # Pre-allocate MTTKRP buffers
-    mttkrp_buffers = ntuple(n -> create_mttkrp_buffer(X, M.U, n), N)
+    mttkrp_buffers = ntuple(
+        n -> create_mttkrp_buffer(X, M.U, n), N)
 
     # Alternating Least Squares (ALS) iterations
     for _ in 1:algorithm.maxiters
