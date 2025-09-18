@@ -1,4 +1,4 @@
-name: Format suggestions
+name: Formatting check
 on:
   pull_request:
 jobs:
