@@ -1,4 +1,4 @@
-name: CI on Julia nightly
+name: CI Tests on Julia nightly
 on:
   push:
     branches:
