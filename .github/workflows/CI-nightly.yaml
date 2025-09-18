@@ -1,4 +1,4 @@
-name: CI
+name: CI on Julia nightly
 on:
   push:
     branches:
@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }}
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     permissions: # needed to allow julia-actions/cache to proactively delete old caches that it has created
@@ -22,9 +22,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - '1.10'    # minimum supported version
-          - '1'       # latest stable 1.x version
         os:
           - ubuntu-latest
           - macOS-latest
@@ -33,7 +30,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.version }}
+          version: nightly
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
