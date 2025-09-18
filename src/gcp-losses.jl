@@ -149,7 +149,7 @@ domain(::Gamma) = Interval(0.0, +Inf)
     Rayleigh(eps::Real = 1e-10)
 
 Loss corresponding to the statistical assumption of Rayleigh data `X`
-with sacle given by the low-rank model tensor `M`
+with scale given by the low-rank model tensor `M`
 
 + **Distribution:** ``x_i \\sim \\operatorname{Rayleigh}(\\theta_i)``
 + **Link function:** ``m_i = \\sqrt{\\frac{\\pi}{2}\\theta_i}``
