@@ -3,7 +3,7 @@
 """
     CPD
 
-Tensor decomposition type for the canonical polyadic decompositions (CPD)
+Tensor decmposition type for the canonical polyadic decompositions (CPD)
 of a tensor (i.e., a multi-dimensional array) `A`.
 This is the return type of `gcp(_)`,
 the corresponding tensor decomposition function.
