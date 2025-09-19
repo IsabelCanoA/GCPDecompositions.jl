@@ -31,6 +31,7 @@ include("gcp-losses.jl")
 include("gcp-constraints.jl")
 include("gcp-algorithms.jl")
 include("api-gcp.jl")
+include("api-gmlm.jl")
 
 if !isdefined(Base, :get_extension)
     include("../ext/LossFunctionsExt.jl")
