@@ -5,7 +5,6 @@ Tensor kernels for Generalized CP Decomposition.
 """
 module TensorKernels
 
-using Compat: allequal
 using LinearAlgebra: mul!
 export create_mttkrp_buffer, mttkrp, mttkrp!, mttkrps, mttkrps!, khatrirao, khatrirao!
 
