@@ -24,7 +24,7 @@ export ncomps,
     normalizecomps, normalizecomps!, permutecomps, permutecomps!, sortcomps, sortcomps!
 export gcp, default_gcp_constraints, default_gcp_algorithm, default_gcp_init
 export GCPLosses, GCPConstraints, GCPAlgorithms
-export gmlm, contract
+export gmlm, contract!
 
 include("tensor-kernels.jl")
 include("cpd.jl")

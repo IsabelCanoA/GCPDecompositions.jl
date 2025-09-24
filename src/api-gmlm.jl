@@ -27,62 +27,97 @@ function gmlm(X, Y, r; loss=GCPLosses.LeastSquares())
     end
 
 	# Run LBFGSB
-	algorithm = GCPAlgorithms.LBFGSB(iprint=1)
+	algorithm = GCPAlgorithms.LBFGSB(iprint=0)
 	lbfgsopts = (; (pn => getproperty(algorithm, pn) for pn in propertynames(algorithm))...)
     vu = GCPDecompositions.GCPAlgorithms.lbfgsb(f, g!, vu0; lbfgsopts...)[2]
     VU = map(range -> reshape(vu[range], :, r), vec_ranges)
 	return CPD(ones(r), VU)
 end
 
-function contract(Xi, B)
-	N, Q = size(Xi), ndims(Xi)
-	M = size(B)[Q+1:end]
-	map(CartesianIndices(M)) do j
-		sum(CartesianIndices(N)) do i
-			Xi[i]*B[CartesianIndex(i,j)]
-		end
-	end
+function contract!(result, Xi, B::Array)
+    q = ndims(Xi)
+    m_dims = size(B)[q+1:end]
+    @assert size(result) == m_dims "Result array must have shape $(m_dims)"
+
+    # Flatten Xi as a 1×P row vector (no copy)
+    Xi_vec = reshape(Xi, 1, :)
+    # Reshape B as a P×Q matrix
+    B_mat  = reshape(B, size(Xi_vec, 2), :)
+    # Flatten result as 1×Q row vector
+    result_vec = reshape(result, 1, :)
+
+    # In-place multiply 
+    mul!(result_vec, Xi_vec, B_mat)
+
+    return result
+end
+
+function contract!(result, Xi, B::CPD)
+	temporal_B = Array(B)
+    contract!(result, Xi, temporal_B)
 end
 
 function gmlm_objective(B, X, Y, loss)
-	n = only(unique([length(X), length(Y)]))
-	M = only(unique(size.(Y)))
-	return sum(
-		GCPLosses.value(loss, Y[i][j], contract(X[i], B)[j])
-		for j in CartesianIndices(M), i in 1:n
-	)
+    n = only(unique([length(X), length(Y)]))
+    M = only(unique(size.(Y)))
+    η = zeros(M)  # preallocate once
+
+    total = 0.0
+    for i in 1:n
+        contract!(η, X[i], B)
+        @inbounds for j in CartesianIndices(M)
+            total += GCPLosses.value(loss, Y[i][j], η[j])
+        end
+    end
+    return total
 end
 
 function gmlm_grad!(GVU, B, X, Y, loss)
-	n = only(unique([length(X), length(Y)]))
-	M = only(unique(size.(Y)))
-	N = only(unique(size.(X)))
-	P, Q = length(M), length(N)
+    n = only(unique([length(X), length(Y)]))
+    M = only(unique(size.(Y)))
+    N = only(unique(size.(X)))
+    P, Q = length(M), length(N)
 
-	V, U = collect.(B.U[1:Q]), collect.(B.U[Q+1:end])
-	GV, GU = GVU[1:Q], GVU[Q+1:end]
+    V, U = collect.(B.U[1:Q]), collect.(B.U[Q+1:end])
+    GV, GU = GVU[1:Q], GVU[Q+1:end]
 
-	# Compute the U gradients
-	_GU = mapreduce(.+, 1:n) do i
-		η = contract(X[i], B)
-		Gi = [GCPLosses.deriv(loss, Y[i][j], η[j]) for j in CartesianIndices(M)]
-		wi = khatrirao(reverse(V)...)'*vec(X[i])
-		mttkrps(Gi, U) .* Ref(Diagonal(wi))
-	end
-	for k in 1:P
-		GU[k] .= _GU[k]
-	end
+    # Preallocate work buffers
+    η  = zeros(M)    
+    Gi = zeros(M)    
 
-	# Compute the V gradients
-	_GV = mapreduce(.+, 1:n) do i
-		η = contract(X[i], B)
-		Gi = [GCPLosses.deriv(loss, Y[i][j], η[j]) for j in CartesianIndices(M)]
-		zi = khatrirao(reverse(U)...)' * vec(Gi)
-		mttkrps(X[i], V) .* Ref(Diagonal(zi))
-	end
-	for k in 1:Q
-		GV[k] .= _GV[k]
-	end
+    _GU = [zero(GU[k]) for k in 1:P]
+    _GV = [zero(GV[k]) for k in 1:Q]
 
-	return GVU
+    for i in 1:n
+        contract!(η, X[i], B)
+
+        # ---- loss derivatives ----
+        @inbounds for j in CartesianIndices(M)
+            Gi[j] = GCPLosses.deriv(loss, Y[i][j], η[j])
+        end
+
+        # ---- update U-grad ----
+        wi = khatrirao(reverse(V)...)' * vec(X[i])
+        tmpU = mttkrps(Gi, U) .* Ref(Diagonal(wi))
+        for k in 1:P
+            _GU[k] .+= tmpU[k]
+        end
+
+        # ---- update V-grad ----
+        zi = khatrirao(reverse(U)...)' * vec(Gi)
+        tmpV = mttkrps(X[i], V) .* Ref(Diagonal(zi))
+        for k in 1:Q
+            _GV[k] .+= tmpV[k]
+        end
+    end
+
+    # Write results into GU / GV
+    for k in 1:P
+        GU[k] .= _GU[k]
+    end
+    for k in 1:Q
+        GV[k] .= _GV[k]
+    end
+
+    return GVU
 end
