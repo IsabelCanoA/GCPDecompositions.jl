@@ -55,6 +55,7 @@ end
 function contract!(result, Xi, B::CPD)
 	temporal_B = Array(B)
     contract!(result, Xi, temporal_B)
+end
 
 function gmlm_objective(B, X, Y, loss)
 	n = only(unique([length(X), length(Y)]))
