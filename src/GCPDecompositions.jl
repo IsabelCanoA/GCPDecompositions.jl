@@ -13,6 +13,7 @@ import LinearAlgebra: norm
 using Base.Order: Ordering, Reverse
 using IntervalSets: Interval
 using Random: default_rng
+using GCPDecompositions:TensorKernels
 
 # Import sparse array module and export data type
 include("SparseArrayCOOs.jl")
@@ -25,6 +26,7 @@ export ncomps,
     normalizecomps, normalizecomps!, permutecomps, permutecomps!, sortcomps, sortcomps!
 export gcp, default_gcp_constraints, default_gcp_algorithm, default_gcp_init
 export GCPLosses, GCPConstraints, GCPAlgorithms
+export gmlm, contract!
 
 include("tensor-kernels.jl")
 include("cpd.jl")
@@ -32,5 +34,6 @@ include("gcp-losses.jl")
 include("gcp-constraints.jl")
 include("gcp-algorithms.jl")
 include("api-gcp.jl")
+include("api-gmlm.jl")
 
 end
