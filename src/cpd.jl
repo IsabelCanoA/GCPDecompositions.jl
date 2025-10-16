@@ -92,21 +92,6 @@ function getindex(M::CPD{T,N}, I::Vararg{Int,N}) where {T,N}
 end
 getindex(M::CPD{T,N}, I::CartesianIndex{N}) where {T,N} = getindex(M, Tuple(I)...)
 
-"""
-    AbstractArray(A::CPD)
-
-Construct a dense `Array` from a `CPD` tensor.
-
-This function reconstructs the full, dense tensor from its factored form . 
-The core of this method is to find an optimal "split point" that partitions 
-the tensor's dimensions into two groups: a "Left" set of dimensions `{1,...,k}`
-and a "Right" set `{k+1,...,d}`. The parameter λ is absorbed by the factor matrix 
-with the smallest dimension. 
-
-# References
-- G. Ballard and T. G. Kolda, "Tensor Decompositions for Data Science,"
-Cambridge University Press, 2025 (Final Draft).
-"""
 function AbstractArray(A::CPD{T,N}) where {T,N}
     U = A.U
     λ = A.λ
