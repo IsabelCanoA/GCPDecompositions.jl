@@ -10,6 +10,7 @@ import Base: getindex
 import Base: permutedims
 import Base: AbstractArray, Array
 import LinearAlgebra: norm
+using LinearAlgebra: Diagonal
 using Base.Order: Ordering, Reverse
 using IntervalSets: Interval
 using Random: default_rng
