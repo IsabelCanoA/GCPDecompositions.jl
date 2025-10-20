@@ -93,29 +93,50 @@ end
 getindex(M::CPD{T,N}, I::CartesianIndex{N}) where {T,N} = getindex(M, Tuple(I)...)
 
 function AbstractArray(A::CPD{T,N}) where {T,N}
-    U = A.U
-    λ = A.λ
-    sz = size(A)
-    R = size(λ)[1]
-    Ndim = ndims(A)
+    out_type = promote_type(eltype.(A.U)..., eltype(A.λ))
+    Y = Array{out_type}(undef, size(A))
+    return copy!(Y, A; buffers = create_copy_buffers(Y,A))
+end
+Array(A::CPD) = Array(AbstractArray(A))
 
-    if ndims(A) == 1 # For a vector, it is just U[1] * λ
-        return U[1] * λ
-    end
-
-    # Find the Optimal Split Point `k` 
+function find_split_point(sz, Ndim)
     k_opt = 1
     M_k = sz[1]
     N_k = prod(sz[k_opt+1:end])
     min_cost = M_k + N_k
-    for k in 2:(ndims(A)-1)
+    for k in 2:(Ndim-1)
         M_k *= sz[k]
-        N_k /= sz[k]
+        N_k = div(N_k, sz[k])
         cost = M_k + N_k
         if cost < min_cost
             min_cost = cost
             k_opt = k
         end
+    end
+    return k_opt
+end
+
+function create_copy_buffers(Y, A::CPD{T, N}) where {T, N}
+    sz = size(A)
+    R = size(A.U[1], 2)
+    k_opt = find_split_point(sz, ndims(A))
+
+    rows_L = prod(sz[1:k_opt])
+    rows_R = prod(sz[k_opt+1:N])
+
+    L_buffer = Array{eltype(Y)}(undef, rows_L, R)
+    R_buffer = Array{eltype(Y)}(undef, rows_R, R)
+
+    return (L=L_buffer, R=R_buffer)
+end
+
+function copy!(Y::AbstractArray, A::CPD{T,N}; buffers=create_copy_buffers(Y,A)) where {T,N}
+    U, λ, sz, R = A.U, A.λ, size(A), size(A.U[1], 2)
+    Ndim = ndims(A)
+
+    if Ndim == 1
+        mul!(Y, U[1], λ)
+        return Y
     end
 
     # Absorb λ into the smallest factor matrix     
@@ -128,22 +149,18 @@ function AbstractArray(A::CPD{T,N}) where {T,N}
         end
     end
 
-    # Compute the "Left" Matrix L
-    L_matrices = reverse(U[1:k_opt])
-    rows_L = prod(sz[1:k_opt])
-    L = similar(U[1], rows_L, R)
-    TensorKernels.khatrirao!(L, L_matrices...)
+    k_opt = find_split_point(sz, Ndim)
+    L, R_mat = buffers.L, buffers.R
 
-    # Compute the "Right" Matrix R 
-    R_matrices = reverse(U[k_opt+1:Ndim])
-    rows_R = prod(sz[k_opt+1:Ndim])
-    R_mat = similar(U[1], rows_R, R)
-    TensorKernels.khatrirao!(R_mat, R_matrices...)
+    # Compute "Left" Matrix L 
+    TensorKernels.khatrirao!(L, reverse(U[1:k_opt])...)
+    TensorKernels.khatrirao!(R_mat, reverse(U[k_opt+1:N])...)
 
-    Y = L * R_mat'
-    return reshape(Y, sz)
+    Y_matrix = reshape(Y, (size(L, 1), size(R_mat, 1)))
+    mul!(Y_matrix, L, R_mat')
+    
+    return Y
 end
-Array(A::CPD) = Array(AbstractArray(A))
 
 norm(M::CPD, p::Real = 2) =
     p == 2 ? norm2(M) : norm((M[I] for I in CartesianIndices(size(M))), p)
