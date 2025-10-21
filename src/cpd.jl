@@ -95,7 +95,7 @@ getindex(M::CPD{T,N}, I::CartesianIndex{N}) where {T,N} = getindex(M, Tuple(I)..
 function AbstractArray(A::CPD{T,N}) where {T,N}
     out_type = promote_type(eltype.(A.U)..., eltype(A.λ))
     Y = Array{out_type}(undef, size(A))
-    return copy!(Y, A; buffers = create_copy_buffers(Y,A))
+    return copy!(Y, A; buffers = create_copy_buffers(Y, A))
 end
 Array(A::CPD) = Array(AbstractArray(A))
 
@@ -116,7 +116,7 @@ function find_split_point(sz, Ndim)
     return k_opt
 end
 
-function create_copy_buffers(Y, A::CPD{T, N}) where {T, N}
+function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
     sz = size(A)
     R = size(A.U[1], 2)
     k_opt = find_split_point(sz, ndims(A))
@@ -127,10 +127,14 @@ function create_copy_buffers(Y, A::CPD{T, N}) where {T, N}
     L_buffer = Array{eltype(Y)}(undef, rows_L, R)
     R_buffer = Array{eltype(Y)}(undef, rows_R, R)
 
-    return (L=L_buffer, R=R_buffer)
+    return (L = L_buffer, R = R_buffer)
 end
 
-function copy!(Y::AbstractArray, A::CPD{T,N}; buffers=create_copy_buffers(Y,A)) where {T,N}
+function copy!(
+    Y::AbstractArray,
+    A::CPD{T,N};
+    buffers = create_copy_buffers(Y, A),
+) where {T,N}
     U, λ, sz, R = A.U, A.λ, size(A), size(A.U[1], 2)
     Ndim = ndims(A)
 
@@ -143,7 +147,7 @@ function copy!(Y::AbstractArray, A::CPD{T,N}; buffers=create_copy_buffers(Y,A)) 
     min_dim = argmin(sz)
     U = ntuple(Val(N)) do k
         if k == min_dim
-            return U[k]* Diagonal(λ)
+            return U[k] * Diagonal(λ)
         else
             return U[k]
         end
@@ -158,7 +162,7 @@ function copy!(Y::AbstractArray, A::CPD{T,N}; buffers=create_copy_buffers(Y,A)) 
 
     Y_matrix = reshape(Y, (size(L, 1), size(R_mat, 1)))
     mul!(Y_matrix, L, R_mat')
-    
+
     return Y
 end
 
@@ -237,9 +241,10 @@ function normalizecomps!(
 
     # Check distribute_to and put into standard (mask) form
     dist_iterable = distribute_to isa Symbol ? (distribute_to,) : distribute_to
-    all(d -> d === :λ || (d isa Integer && d in 1:N), dist_iterable) ||
-        throw(ArgumentError("`distribute_to` must be `:λ`, an integer specifying a mode, \
-                             or a collection, got $distribute_to"))
+    all(d -> d === :λ || (d isa Integer && d in 1:N), dist_iterable) || throw(
+        ArgumentError("`distribute_to` must be `:λ`, an integer specifying a mode, \
+                       or a collection, got $distribute_to"),
+    )
     dist_λ = :λ in dist_iterable
     dist_U = ntuple(in(dist_iterable), N)
 
