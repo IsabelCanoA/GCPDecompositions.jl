@@ -92,8 +92,80 @@ function getindex(M::CPD{T,N}, I::Vararg{Int,N}) where {T,N}
 end
 getindex(M::CPD{T,N}, I::CartesianIndex{N}) where {T,N} = getindex(M, Tuple(I)...)
 
-AbstractArray(A::CPD) = reshape(TensorKernels.khatrirao(reverse(A.U)...) * A.λ, size(A))
-Array(A::CPD) = Array(AbstractArray(A))
+function Array(A::CPD{T,N}) where {T,N}
+    out_type = promote_type(eltype.(A.U)..., eltype(A.λ))
+    Y = Array{out_type}(undef, size(A))
+    return copy!(Y, A; buffers = create_copy_buffers(Y, A))
+end
+
+AbstractArray(A::CPD) = Array(A)
+
+function find_split_point(sz, Ndim)
+    k_opt = 1
+    M_k = sz[1]
+    N_k = prod(sz[k_opt+1:end])
+    min_cost = M_k + N_k
+    for k in 2:(Ndim-1)
+        M_k *= sz[k]
+        N_k = div(N_k, sz[k])
+        cost = M_k + N_k
+        if cost < min_cost
+            min_cost = cost
+            k_opt = k
+        end
+    end
+    return k_opt
+end
+
+function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
+    sz = size(A)
+    R = size(A.U[1], 2)
+    k_opt = find_split_point(sz, ndims(A))
+
+    rows_L = prod(sz[1:k_opt])
+    rows_R = prod(sz[k_opt+1:N])
+
+    L_buffer = Array{eltype(Y)}(undef, rows_L, R)
+    R_buffer = Array{eltype(Y)}(undef, rows_R, R)
+
+    return (L = L_buffer, R = R_buffer)
+end
+
+function copy!(
+    Y::AbstractArray,
+    A::CPD{T,N};
+    buffers = create_copy_buffers(Y, A),
+) where {T,N}
+    U, λ, sz, R = A.U, A.λ, size(A), size(A.U[1], 2)
+    Ndim = ndims(A)
+
+    if Ndim == 1
+        mul!(Y, U[1], λ)
+        return Y
+    end
+
+    # Absorb λ into the smallest factor matrix     
+    min_dim = argmin(sz)
+    U = ntuple(Val(N)) do k
+        if k == min_dim
+            return U[k] * Diagonal(λ)
+        else
+            return U[k]
+        end
+    end
+
+    k_opt = find_split_point(sz, Ndim)
+    L, R_mat = buffers.L, buffers.R
+
+    # Compute "Left" Matrix L 
+    TensorKernels.khatrirao!(L, reverse(U[1:k_opt])...)
+    TensorKernels.khatrirao!(R_mat, reverse(U[k_opt+1:N])...)
+
+    Y_matrix = reshape(Y, (size(L, 1), size(R_mat, 1)))
+    mul!(Y_matrix, L, R_mat')
+
+    return Y
+end
 
 norm(M::CPD, p::Real = 2) =
     p == 2 ? norm2(M) : norm((M[I] for I in CartesianIndices(size(M))), p)
@@ -170,9 +242,10 @@ function normalizecomps!(
 
     # Check distribute_to and put into standard (mask) form
     dist_iterable = distribute_to isa Symbol ? (distribute_to,) : distribute_to
-    all(d -> d === :λ || (d isa Integer && d in 1:N), dist_iterable) ||
-        throw(ArgumentError("`distribute_to` must be `:λ`, an integer specifying a mode, \
-                             or a collection, got $distribute_to"))
+    all(d -> d === :λ || (d isa Integer && d in 1:N), dist_iterable) || throw(
+        ArgumentError("`distribute_to` must be `:λ`, an integer specifying a mode, \
+                       or a collection, got $distribute_to"),
+    )
     dist_λ = :λ in dist_iterable
     dist_U = ntuple(in(dist_iterable), N)
 
