@@ -39,14 +39,10 @@ function contract!(result, Xi, B::Array)
     m_dims = size(B)[q+1:end]
     @assert size(result) == m_dims "Result array must have shape $(m_dims)"
 
-    # Flatten Xi as a 1×P row vector (no copy)
     Xi_vec = reshape(Xi, 1, :)
-    # Reshape B as a P×Q matrix
     B_mat  = reshape(B, size(Xi_vec, 2), :)
-    # Flatten result as 1×Q row vector
     result_vec = reshape(result, 1, :)
 
-    # In-place multiply 
     mul!(result_vec, Xi_vec, B_mat)
 
     return result
@@ -87,23 +83,22 @@ function gmlm_grad!(GVU, B, X, Y, loss)
     _GU = [zero(GU[k]) for k in 1:P]
     _GV = [zero(GV[k]) for k in 1:Q]
 
+    KR_V = khatrirao(reverse(V)...)
+    KR_U = khatrirao(reverse(U)...)
     for i in 1:n
         contract!(η, X[i], B)
 
-        # ---- loss derivatives ----
-        @inbounds for j in CartesianIndices(M)
-            Gi[j] = GCPLosses.deriv(loss, Y[i][j], η[j])
-        end
+        Gi .= GCPLosses.deriv.(Ref(loss), Y[i], η)
 
         # ---- update U-grad ----
-        wi = khatrirao(reverse(V)...)' * vec(X[i])
+        wi = KR_V' * vec(X[i])
         tmpU = mttkrps(Gi, U) .* Ref(Diagonal(wi))
         for k in 1:P
             _GU[k] .+= tmpU[k]
         end
 
         # ---- update V-grad ----
-        zi = khatrirao(reverse(U)...)' * vec(Gi)
+        zi = KR_U' * vec(Gi)
         tmpV = mttkrps(X[i], V) .* Ref(Diagonal(zi))
         for k in 1:Q
             _GV[k] .+= tmpV[k]
