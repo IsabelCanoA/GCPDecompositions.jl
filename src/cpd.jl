@@ -146,7 +146,7 @@ function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
 
     # Multiply into (appropriately matricized) dst array
     dst_mat = reshape(dst, size(buffers.L, 1), size(buffers.R, 1))
-    mul!(dst_mat, buffers.L, buffers.R')
+    mul!(dst_mat, buffers.L, transpose(buffers.R))
 
     return dst
 end
