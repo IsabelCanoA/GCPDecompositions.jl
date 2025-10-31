@@ -126,11 +126,11 @@ function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
     return (L = L_buffer, R = R_buffer)
 end
 
-function copy!(Y::Array, A::CPD{T,N}; buffers = create_copy_buffers(Y, A)) where {T,N}
+function copy!(Y::Array, A::CPD; buffers = create_copy_buffers(Y, A))
     U, λ, sz, R = A.U, A.λ, size(A), size(A.U[1], 2)
-    Ndim = ndims(A)
+    N = ndims(A)
 
-    if Ndim == 1
+    if N == 1
         mul!(Y, U[1], λ)
         return Y
     end
@@ -145,7 +145,7 @@ function copy!(Y::Array, A::CPD{T,N}; buffers = create_copy_buffers(Y, A)) where
         end
     end
 
-    k_opt = find_split_point(sz, Ndim)
+    k_opt = find_split_point(sz, N)
     L, R_mat = buffers.L, buffers.R
 
     # Compute "Left" Matrix L 
