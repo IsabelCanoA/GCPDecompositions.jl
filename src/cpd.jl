@@ -140,7 +140,7 @@ function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
     U = ntuple(k -> k == k_min ? src.U[k] * Diagonal(src.λ) : src.U[k], Val(N))
 
     # Compute left and right khatrirao products (based on optimal split)
-    k_split = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N)
+    k_split = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N-1)
     TensorKernels.khatrirao!(buffers.L, reverse(U[1:k_split])...)
     TensorKernels.khatrirao!(buffers.R, reverse(U[k_split+1:N])...)
 
