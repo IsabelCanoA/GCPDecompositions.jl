@@ -139,15 +139,14 @@ function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
     k_min = argmin(sz)
     U = ntuple(k -> k == k_min ? src.U[k] * Diagonal(src.λ) : src.U[k], Val(N))
 
-    k_opt = find_split_point(sz, N)
-    L, R_mat = buffers.L, buffers.R
+    # Compute left and right khatrirao products (based on optimal split)
+    k_split = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N)
+    TensorKernels.khatrirao!(buffers.L, reverse(U[1:k_split])...)
+    TensorKernels.khatrirao!(buffers.R, reverse(U[k_split+1:N])...)
 
-    # Compute "Left" Matrix L 
-    TensorKernels.khatrirao!(L, reverse(U[1:k_opt])...)
-    TensorKernels.khatrirao!(R_mat, reverse(U[k_opt+1:N])...)
-
-    Y_matrix = reshape(dst, (size(L, 1), size(R_mat, 1)))
-    mul!(Y_matrix, L, R_mat')
+    # Multiply into (appropriately matricized) dst array
+    dst_mat = reshape(dst, size(buffers.L, 1), size(buffers.R, 1))
+    mul!(dst_mat, buffers.L, buffers.R')
 
     return dst
 end
