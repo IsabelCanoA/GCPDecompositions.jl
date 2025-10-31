@@ -126,13 +126,13 @@ function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
     return (L = L_buffer, R = R_buffer)
 end
 
-function copy!(Y::Array, A::CPD; buffers = create_copy_buffers(Y, A))
-    U, λ, sz, R = A.U, A.λ, size(A), size(A.U[1], 2)
-    N = ndims(A)
+function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
+    U, λ, sz, R = src.U, src.λ, size(src), size(src.U[1], 2)
+    N = ndims(src)
 
     if N == 1
-        mul!(Y, U[1], λ)
-        return Y
+        mul!(dst, U[1], λ)
+        return dst
     end
 
     # Absorb λ into the smallest factor matrix     
@@ -152,10 +152,10 @@ function copy!(Y::Array, A::CPD; buffers = create_copy_buffers(Y, A))
     TensorKernels.khatrirao!(L, reverse(U[1:k_opt])...)
     TensorKernels.khatrirao!(R_mat, reverse(U[k_opt+1:N])...)
 
-    Y_matrix = reshape(Y, (size(L, 1), size(R_mat, 1)))
+    Y_matrix = reshape(dst, (size(L, 1), size(R_mat, 1)))
     mul!(Y_matrix, L, R_mat')
 
-    return Y
+    return dst
 end
 
 norm(M::CPD, p::Real = 2) =
