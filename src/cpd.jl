@@ -95,21 +95,19 @@ getindex(M::CPD{T,N}, I::CartesianIndex{N}) where {T,N} = getindex(M, Tuple(I)..
 AbstractArray(A::CPD) = Array(A)
 Array(A::CPD{T}) where {T} = copy!(Array{T}(undef, size(A)), A)
 
-function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
-    # Fast path: N == 1
+function create_copy_buffers(dst::Array, src::CPD{T}) where {T}
+    # Extract dims
+    N, sz, r = ndims(src), size(src), ncomps(src)
+
+    # Fast path: N == 1 (no buffers needed)
     N == 1 && return ()
 
-    sz = size(A)
-    R = size(A.U[1], 2)
-    k_opt = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N-1)
-
-    rows_L = prod(sz[1:k_opt])
-    rows_R = prod(sz[k_opt+1:N])
-
-    L_buffer = Array{eltype(Y)}(undef, rows_L, R)
-    R_buffer = Array{eltype(Y)}(undef, rows_R, R)
-
-    return (L = L_buffer, R = R_buffer)
+    # Usual path (buffers needed for khatrirao products)
+    k_split = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N-1)
+    return (;
+        KR_L = Array{T}(undef, prod(sz[1:k_split]), r),
+        KR_R = Array{T}(undef, prod(sz[k_split+1:N]), r),
+    )
 end
 
 function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
@@ -127,12 +125,12 @@ function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
 
     # Compute left and right khatrirao products (based on optimal split)
     k_split = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N-1)
-    TensorKernels.khatrirao!(buffers.L, reverse(U[1:k_split])...)
-    TensorKernels.khatrirao!(buffers.R, reverse(U[k_split+1:N])...)
+    TensorKernels.khatrirao!(buffers.KR_L, reverse(U[1:k_split])...)
+    TensorKernels.khatrirao!(buffers.KR_R, reverse(U[k_split+1:N])...)
 
     # Multiply into (appropriately matricized) dst array
-    dst_mat = reshape(dst, size(buffers.L, 1), size(buffers.R, 1))
-    mul!(dst_mat, buffers.L, transpose(buffers.R))
+    dst_mat = reshape(dst, size(buffers.KR_L, 1), size(buffers.KR_R, 1))
+    mul!(dst_mat, buffers.KR_L, transpose(buffers.KR_R))
 
     return dst
 end
