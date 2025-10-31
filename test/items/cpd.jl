@@ -151,7 +151,7 @@ end
     end
 end
 
-@testitem "Array" begin
+@testitem "AbstractArray/Array/copy!" begin
     @testset "N=$N, K=$K" for N in 1:3, K in 1:3
         T = Float64
         λfull = T[1, 100, 10000]
@@ -160,7 +160,20 @@ end
         U = (U1full[:, 1:K], U2full[:, 1:K], U3full[:, 1:K])[1:N]
         M = CPD(λ, U)
 
+        # AbstractArray
+        X = AbstractArray(M)
+        @test X isa Array
+        @test all(I -> M[I] == X[I], CartesianIndices(X))
+
+        # Array
         X = Array(M)
+        @test X isa Array
+        @test all(I -> M[I] == X[I], CartesianIndices(X))
+
+        # copy!
+        fill!(X, zero(T))
+        Y = copy!(X, M)
+        @test Y === X
         @test all(I -> M[I] == X[I], CartesianIndices(X))
     end
 end
