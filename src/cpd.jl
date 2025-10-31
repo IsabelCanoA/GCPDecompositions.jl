@@ -242,10 +242,9 @@ function normalizecomps!(
 
     # Check distribute_to and put into standard (mask) form
     dist_iterable = distribute_to isa Symbol ? (distribute_to,) : distribute_to
-    all(d -> d === :λ || (d isa Integer && d in 1:N), dist_iterable) || throw(
-        ArgumentError("`distribute_to` must be `:λ`, an integer specifying a mode, \
-                       or a collection, got $distribute_to"),
-    )
+    all(d -> d === :λ || (d isa Integer && d in 1:N), dist_iterable) ||
+        throw(ArgumentError("`distribute_to` must be `:λ`, an integer specifying a mode, \
+                             or a collection, got $distribute_to"))
     dist_λ = :λ in dist_iterable
     dist_U = ntuple(in(dist_iterable), N)
 
