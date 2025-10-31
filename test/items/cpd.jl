@@ -175,6 +175,8 @@ end
         Y = copy!(X, M)
         @test Y === X
         @test all(I -> M[I] == X[I], CartesianIndices(X))
+        X = similar(X, 4)
+        @test_throws ArgumentError copy!(X, M)
     end
 end
 

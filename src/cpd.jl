@@ -127,6 +127,10 @@ function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
 end
 
 function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
+    # Make sure axes match
+    axes(dst) == axes(src) ||
+        throw(ArgumentError("destination array must have the same axes as the source CPD"))
+
     U, λ, sz, R = src.U, src.λ, size(src), size(src.U[1], 2)
     N = ndims(src)
 
