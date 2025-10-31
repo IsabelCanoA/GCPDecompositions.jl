@@ -95,30 +95,13 @@ getindex(M::CPD{T,N}, I::CartesianIndex{N}) where {T,N} = getindex(M, Tuple(I)..
 AbstractArray(A::CPD) = Array(A)
 Array(A::CPD{T}) where {T} = copy!(Array{T}(undef, size(A)), A)
 
-function find_split_point(sz, Ndim)
-    k_opt = 1
-    M_k = sz[1]
-    N_k = prod(sz[k_opt+1:end])
-    min_cost = M_k + N_k
-    for k in 2:(Ndim-1)
-        M_k *= sz[k]
-        N_k = div(N_k, sz[k])
-        cost = M_k + N_k
-        if cost < min_cost
-            min_cost = cost
-            k_opt = k
-        end
-    end
-    return k_opt
-end
-
 function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
     # Fast path: N == 1
     N == 1 && return ()
 
     sz = size(A)
     R = size(A.U[1], 2)
-    k_opt = find_split_point(sz, ndims(A))
+    k_opt = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N-1)
 
     rows_L = prod(sz[1:k_opt])
     rows_R = prod(sz[k_opt+1:N])
