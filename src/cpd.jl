@@ -113,6 +113,9 @@ function find_split_point(sz, Ndim)
 end
 
 function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
+    # Fast path: N == 1
+    N == 1 && return ()
+
     sz = size(A)
     R = size(A.U[1], 2)
     k_opt = find_split_point(sz, ndims(A))
