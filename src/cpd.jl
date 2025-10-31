@@ -95,21 +95,6 @@ getindex(M::CPD{T,N}, I::CartesianIndex{N}) where {T,N} = getindex(M, Tuple(I)..
 AbstractArray(A::CPD) = Array(A)
 Array(A::CPD{T}) where {T} = copy!(Array{T}(undef, size(A)), A)
 
-function create_copy_buffers(dst::Array, src::CPD{T}) where {T}
-    # Extract dims
-    N, sz, r = ndims(src), size(src), ncomps(src)
-
-    # Fast path: N == 1 (no buffers needed)
-    N == 1 && return ()
-
-    # Usual path (buffers needed for khatrirao products)
-    k_split = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N-1)
-    return (;
-        KR_L = Array{T}(undef, prod(sz[1:k_split]), r),
-        KR_R = Array{T}(undef, prod(sz[k_split+1:N]), r),
-    )
-end
-
 function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
     # Make sure axes match and extract dims
     axes(dst) == axes(src) ||
@@ -133,6 +118,21 @@ function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
     mul!(dst_mat, buffers.KR_L, transpose(buffers.KR_R))
 
     return dst
+end
+
+function create_copy_buffers(dst::Array, src::CPD{T}) where {T}
+    # Extract dims
+    N, sz, r = ndims(src), size(src), ncomps(src)
+
+    # Fast path: N == 1 (no buffers needed)
+    N == 1 && return ()
+
+    # Usual path (buffers needed for khatrirao products)
+    k_split = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N-1)
+    return (;
+        KR_L = Array{T}(undef, prod(sz[1:k_split]), r),
+        KR_R = Array{T}(undef, prod(sz[k_split+1:N]), r),
+    )
 end
 
 norm(M::CPD, p::Real = 2) =
