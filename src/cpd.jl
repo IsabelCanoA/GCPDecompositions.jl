@@ -135,18 +135,9 @@ function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
     # Fast path: N == 1
     N == 1 && return mul!(dst, only(src.U), src.λ)
 
-    U, λ, sz, R = src.U, src.λ, size(src), size(src.U[1], 2)
-    N = ndims(src)
-
-    # Absorb λ into the smallest factor matrix     
-    min_dim = argmin(sz)
-    U = ntuple(Val(N)) do k
-        if k == min_dim
-            return U[k] * Diagonal(λ)
-        else
-            return U[k]
-        end
-    end
+    # Collect scaled factor matrices with λ absorbed into the smallest one
+    k_min = argmin(sz)
+    U = ntuple(k -> k == k_min ? src.U[k] * Diagonal(src.λ) : src.U[k], Val(N))
 
     k_opt = find_split_point(sz, N)
     L, R_mat = buffers.L, buffers.R
