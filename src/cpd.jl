@@ -127,17 +127,16 @@ function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
 end
 
 function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
-    # Make sure axes match
+    # Make sure axes match and extract dims
     axes(dst) == axes(src) ||
         throw(ArgumentError("destination array must have the same axes as the source CPD"))
+    N, sz = ndims(src), size(src)
+
+    # Fast path: N == 1
+    N == 1 && return mul!(dst, only(src.U), src.λ)
 
     U, λ, sz, R = src.U, src.λ, size(src), size(src.U[1], 2)
     N = ndims(src)
-
-    if N == 1
-        mul!(dst, U[1], λ)
-        return dst
-    end
 
     # Absorb λ into the smallest factor matrix     
     min_dim = argmin(sz)
