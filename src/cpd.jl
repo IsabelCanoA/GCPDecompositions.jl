@@ -92,12 +92,13 @@ function getindex(M::CPD{T,N}, I::Vararg{Int,N}) where {T,N}
 end
 getindex(M::CPD{T,N}, I::CartesianIndex{N}) where {T,N} = getindex(M, Tuple(I)...)
 
-function AbstractArray(A::CPD{T,N}) where {T,N}
+function Array(A::CPD{T,N}) where {T,N}
     out_type = promote_type(eltype.(A.U)..., eltype(A.λ))
     Y = Array{out_type}(undef, size(A))
     return copy!(Y, A; buffers = create_copy_buffers(Y, A))
 end
-Array(A::CPD) = Array(AbstractArray(A))
+
+AbstractArray(A::CPD) = Array(A)
 
 function find_split_point(sz, Ndim)
     k_opt = 1
