@@ -126,11 +126,7 @@ function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
     return (L = L_buffer, R = R_buffer)
 end
 
-function copy!(
-    Y::AbstractArray,
-    A::CPD{T,N};
-    buffers = create_copy_buffers(Y, A),
-) where {T,N}
+function copy!(Y::Array, A::CPD{T,N}; buffers = create_copy_buffers(Y, A)) where {T,N}
     U, λ, sz, R = A.U, A.λ, size(A), size(A.U[1], 2)
     Ndim = ndims(A)
 
