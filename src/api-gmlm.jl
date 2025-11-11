@@ -27,7 +27,7 @@ function gmlm(X, Y, r; loss = GCPLosses.LeastSquares())
     end
 
     # Run LBFGSB
-    algorithm = GCPAlgorithms.LBFGSB(; iprint = 0)
+    algorithm = GCPAlgorithms.LBFGSB(; iprint = -1)
     lbfgsopts = (; (pn => getproperty(algorithm, pn) for pn in propertynames(algorithm))...)
     vu = GCPDecompositions.GCPAlgorithms.lbfgsb(f, g!, vu0; lbfgsopts...)[2]
     VU = map(range -> reshape(vu[range], :, r), vec_ranges)
@@ -86,7 +86,9 @@ function gmlm_grad!(GVU, B, X, Y, loss)
     KR_V = khatrirao(reverse(V)...)
     KR_U = khatrirao(reverse(U)...)
     for i in 1:n
-        contract!(η, X[i], B)
+        # contract!(η, X[i], B)
+        ωi = KR_V' * vec(X[i])
+        copy!(η, CPD(ωi, U))
 
         Gi .= GCPLosses.deriv.(Ref(loss), Y[i], η)
 
