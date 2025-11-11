@@ -27,7 +27,7 @@ function gmlm(X, Y, r; loss = GCPLosses.LeastSquares())
     end
 
     # Run LBFGSB
-    algorithm = GCPAlgorithms.LBFGSB(; iprint = 0)
+    algorithm = GCPAlgorithms.LBFGSB(; iprint = -1)
     lbfgsopts = (; (pn => getproperty(algorithm, pn) for pn in propertynames(algorithm))...)
     vu = GCPDecompositions.GCPAlgorithms.lbfgsb(f, g!, vu0; lbfgsopts...)[2]
     VU = map(range -> reshape(vu[range], :, r), vec_ranges)
