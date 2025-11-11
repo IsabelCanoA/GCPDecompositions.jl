@@ -92,79 +92,47 @@ function getindex(M::CPD{T,N}, I::Vararg{Int,N}) where {T,N}
 end
 getindex(M::CPD{T,N}, I::CartesianIndex{N}) where {T,N} = getindex(M, Tuple(I)...)
 
-function Array(A::CPD{T,N}) where {T,N}
-    out_type = promote_type(eltype.(A.U)..., eltype(A.λ))
-    Y = Array{out_type}(undef, size(A))
-    return copy!(Y, A; buffers = create_copy_buffers(Y, A))
-end
-
 AbstractArray(A::CPD) = Array(A)
+Array(A::CPD{T}) where {T} = copy!(Array{T}(undef, size(A)), A)
 
-function find_split_point(sz, Ndim)
-    k_opt = 1
-    M_k = sz[1]
-    N_k = prod(sz[k_opt+1:end])
-    min_cost = M_k + N_k
-    for k in 2:(Ndim-1)
-        M_k *= sz[k]
-        N_k = div(N_k, sz[k])
-        cost = M_k + N_k
-        if cost < min_cost
-            min_cost = cost
-            k_opt = k
-        end
-    end
-    return k_opt
+function copy!(dst::Array, src::CPD; buffers = create_copy_buffers(dst, src))
+    # Make sure axes match and extract dims
+    axes(dst) == axes(src) ||
+        throw(ArgumentError("destination array must have the same axes as the source CPD"))
+    N, sz = ndims(src), size(src)
+
+    # Fast path: N == 1
+    N == 1 && return mul!(dst, only(src.U), src.λ)
+
+    # Collect scaled factor matrices with λ absorbed into the smallest one
+    k_min = argmin(sz)
+    U = ntuple(k -> k == k_min ? src.U[k] * Diagonal(src.λ) : src.U[k], Val(N))
+
+    # Compute left and right khatrirao products (based on optimal split)
+    k_split = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N-1)
+    TensorKernels.khatrirao!(buffers.KR_L, reverse(U[1:k_split])...)
+    TensorKernels.khatrirao!(buffers.KR_R, reverse(U[k_split+1:N])...)
+
+    # Multiply into (appropriately matricized) dst array
+    dst_mat = reshape(dst, size(buffers.KR_L, 1), size(buffers.KR_R, 1))
+    mul!(dst_mat, buffers.KR_L, transpose(buffers.KR_R))
+
+    return dst
 end
 
-function create_copy_buffers(Y, A::CPD{T,N}) where {T,N}
-    sz = size(A)
-    R = size(A.U[1], 2)
-    k_opt = find_split_point(sz, ndims(A))
+function create_copy_buffers(dst::Array, src::CPD{T}) where {T}
+    # Extract dims
+    N, sz, r = ndims(src), size(src), ncomps(src)
 
-    rows_L = prod(sz[1:k_opt])
-    rows_R = prod(sz[k_opt+1:N])
+    # Fast path: N == 1 (no buffers needed)
+    N == 1 && return ()
 
-    L_buffer = Array{eltype(Y)}(undef, rows_L, R)
-    R_buffer = Array{eltype(Y)}(undef, rows_R, R)
-
-    return (L = L_buffer, R = R_buffer)
-end
-
-function copy!(
-    Y::AbstractArray,
-    A::CPD{T,N};
-    buffers = create_copy_buffers(Y, A),
-) where {T,N}
-    U, λ, sz, R = A.U, A.λ, size(A), size(A.U[1], 2)
-    Ndim = ndims(A)
-
-    if Ndim == 1
-        mul!(Y, U[1], λ)
-        return Y
-    end
-
-    # Absorb λ into the smallest factor matrix     
-    min_dim = argmin(sz)
-    U = ntuple(Val(N)) do k
-        if k == min_dim
-            return U[k] * Diagonal(λ)
-        else
-            return U[k]
-        end
-    end
-
-    k_opt = find_split_point(sz, Ndim)
-    L, R_mat = buffers.L, buffers.R
-
-    # Compute "Left" Matrix L 
-    TensorKernels.khatrirao!(L, reverse(U[1:k_opt])...)
-    TensorKernels.khatrirao!(R_mat, reverse(U[k_opt+1:N])...)
-
-    Y_matrix = reshape(Y, (size(L, 1), size(R_mat, 1)))
-    mul!(Y_matrix, L, R_mat')
-
-    return Y
+    # Usual path (buffers needed for khatrirao products)
+    k_split = argmin(k -> prod(sz[1:k]) + prod(sz[k+1:end]), 1:N-1)
+    return (;
+        KR_L = Array{T}(undef, prod(sz[1:k_split]), r),
+        KR_R = Array{T}(undef, prod(sz[k_split+1:N]), r),
+    )
 end
 
 norm(M::CPD, p::Real = 2) =
@@ -242,10 +210,9 @@ function normalizecomps!(
 
     # Check distribute_to and put into standard (mask) form
     dist_iterable = distribute_to isa Symbol ? (distribute_to,) : distribute_to
-    all(d -> d === :λ || (d isa Integer && d in 1:N), dist_iterable) || throw(
-        ArgumentError("`distribute_to` must be `:λ`, an integer specifying a mode, \
-                       or a collection, got $distribute_to"),
-    )
+    all(d -> d === :λ || (d isa Integer && d in 1:N), dist_iterable) ||
+        throw(ArgumentError("`distribute_to` must be `:λ`, an integer specifying a mode, \
+                             or a collection, got $distribute_to"))
     dist_λ = :λ in dist_iterable
     dist_U = ntuple(in(dist_iterable), N)
 
