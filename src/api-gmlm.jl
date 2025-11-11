@@ -53,6 +53,12 @@ function contract!(result, Xi, B::CPD)
     return contract!(result, Xi, temporal_B)
 end
 
+function contract_cp_copy!(result, X, V, U)
+    ω = GCPDecompositions.TensorKernels.khatrirao(reverse(V)...)'*vec(X)
+    copy!(result, CPD(ω, U))
+    return result
+end
+
 function gmlm_objective(B, X, Y, loss)
     n = only(unique([length(X), length(Y)]))
     M = only(unique(size.(Y)))
