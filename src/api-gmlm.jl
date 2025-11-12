@@ -59,16 +59,23 @@ function contract_cp_copy!(result, X, V, U)
     return result
 end
 
-function gmlm_objective(B, X, Y, loss)
+function gmlm_objective(B::CPD, X, Y, loss)
     n = only(unique([length(X), length(Y)]))
     M = only(unique(size.(Y)))
     η = zeros(M)
-
     total = 0.0
+
+    # Split B into predictor and response factors
+    Q = length(size(X[1]))
+    V = B.U[1:Q]
+    U = B.U[Q+1:end]
+
+    
     for i in 1:n
-        contract!(η, X[i], B)
-        @inbounds for j in CartesianIndices(M)
-            total += GCPLosses.value(loss, Y[i][j], η[j])
+        contract_cp_copy!(η, X[i], Tuple(V), Tuple(U))
+        Y_i = Y[i]
+        for k in eachindex(Y_i, η)
+            total += GCPLosses.value(loss, Y_i[k], η[k])
         end
     end
     return total
