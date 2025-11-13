@@ -53,16 +53,30 @@ function contract!(result, Xi, B::CPD)
     return contract!(result, Xi, temporal_B)
 end
 
-function gmlm_objective(B, X, Y, loss)
+function contract_cp_copy!(result, X, V, U)
+    ω = GCPDecompositions.TensorKernels.khatrirao(reverse(V)...)'*vec(X)
+    copy!(result, CPD(ω, U))
+    return result
+end
+
+function gmlm_objective(B::CPD, X, Y, loss)
     n = only(unique([length(X), length(Y)]))
     M = only(unique(size.(Y)))
     η = zeros(M)
-
     total = 0.0
+
+    # Split B into predictor and response factors
+    Q = length(size(X[1]))
+    V = B.U[1:Q]
+    U = B.U[Q+1:end]
+
+    KR_V = khatrirao(reverse(V)...)
     for i in 1:n
-        contract!(η, X[i], B)
-        @inbounds for j in CartesianIndices(M)
-            total += GCPLosses.value(loss, Y[i][j], η[j])
+        ωi = KR_V' * vec(X[i])
+        copy!(η, CPD(ωi, U))
+        Y_i = Y[i]
+        for k in eachindex(Y_i, η)
+            total += GCPLosses.value(loss, Y_i[k], η[k])
         end
     end
     return total
@@ -86,7 +100,9 @@ function gmlm_grad!(GVU, B, X, Y, loss)
     KR_V = khatrirao(reverse(V)...)
     KR_U = khatrirao(reverse(U)...)
     for i in 1:n
-        contract!(η, X[i], B)
+        # contract!(η, X[i], B)
+        ωi = KR_V' * vec(X[i])
+        copy!(η, CPD(ωi, U))
 
         Gi .= GCPLosses.deriv.(Ref(loss), Y[i], η)
 
