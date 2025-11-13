@@ -34,31 +34,6 @@ function gmlm(X, Y, r; loss = GCPLosses.LeastSquares())
     return CPD(ones(r), VU)
 end
 
-function contract!(result, Xi, B::Array)
-    q = ndims(Xi)
-    m_dims = size(B)[q+1:end]
-    @assert size(result) == m_dims "Result array must have shape $(m_dims)"
-
-    Xi_vec = reshape(Xi, 1, :)
-    B_mat = reshape(B, size(Xi_vec, 2), :)
-    result_vec = reshape(result, 1, :)
-
-    mul!(result_vec, Xi_vec, B_mat)
-
-    return result
-end
-
-function contract!(result, Xi, B::CPD)
-    temporal_B = Array(B)
-    return contract!(result, Xi, temporal_B)
-end
-
-function contract_cp_copy!(result, X, V, U)
-    ω = GCPDecompositions.TensorKernels.khatrirao(reverse(V)...)'*vec(X)
-    copy!(result, CPD(ω, U))
-    return result
-end
-
 function gmlm_objective(B::CPD, X, Y, loss)
     n = only(unique([length(X), length(Y)]))
     M = only(unique(size.(Y)))
@@ -100,7 +75,6 @@ function gmlm_grad!(GVU, B, X, Y, loss)
     KR_V = khatrirao(reverse(V)...)
     KR_U = khatrirao(reverse(U)...)
     for i in 1:n
-        # contract!(η, X[i], B)
         ωi = KR_V' * vec(X[i])
         copy!(η, CPD(ωi, U))
 
