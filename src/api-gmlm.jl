@@ -70,9 +70,10 @@ function gmlm_objective(B::CPD, X, Y, loss)
     V = B.U[1:Q]
     U = B.U[Q+1:end]
 
-    
+    KR_V = khatrirao(reverse(V)...)
     for i in 1:n
-        contract_cp_copy!(η, X[i], Tuple(V), Tuple(U))
+        ωi = KR_V' * vec(X[i])
+        copy!(η, CPD(ωi, U))
         Y_i = Y[i]
         for k in eachindex(Y_i, η)
             total += GCPLosses.value(loss, Y_i[k], η[k])
